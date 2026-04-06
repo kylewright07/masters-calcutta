@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>The Masters Calcutta 2026</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{
+    font-family:'DM Sans',system-ui,-apple-system,sans-serif;
+    background:#0b1a0e;
+    color:#e8e4da;
+    min-height:100vh;
+    -webkit-font-smoothing:antialiased;
+    -moz-osx-font-smoothing:grayscale;
+  }
+  input,select,button{font-family:inherit;}
+  input:focus,select:focus{outline:none;border-color:#c9a84c !important;}
+  ::placeholder{color:#4a6b4e;}
+  ::-webkit-scrollbar{width:5px;}
+  ::-webkit-scrollbar-track{background:transparent;}
+  ::-webkit-scrollbar-thumb{background:#1e3d22;border-radius:3px;}
+  button{-webkit-tap-highlight-color:transparent;}
+
+  .header{
+    text-align:center;padding:32px 20px 24px;
+    background:linear-gradient(180deg,#0f2413 0%,#0b1a0e 100%);
+    border-bottom:1px solid #1e3d22;
+  }
+  .header-sub{
+    font-family:'DM Sans',sans-serif;font-size:11px;letter-spacing:5px;
+    text-transform:uppercase;color:#c9a84c;margin-bottom:8px;font-weight:500;
+  }
+  .header h1{
+    font-family:'Playfair Display',Georgia,serif;font-size:34px;font-weight:500;
+    color:#fff;letter-spacing:0.5px;margin-bottom:4px;line-height:1.2;
+  }
+  .header-date{font-size:13px;color:#7a9b7e;letter-spacing:2px;font-weight:400;}
+  .header-meta{margin-top:14px;display:flex;justify-content:center;align-items:center;gap:10px;flex-wrap:wrap;}
+
+  .pill{
+    border-radius:100px;padding:6px 18px;font-size:13px;font-weight:600;
+    border:none;cursor:pointer;transition:all 0.2s;
+  }
+  .pill-gold{background:rgba(201,168,76,0.15);border:1px solid rgba(201,168,76,0.4);color:#c9a84c;}
+  .pill-muted{background:rgba(255,255,255,0.05);border:1px solid #1e3d22;color:#7a9b7e;font-weight:500;}
+
+  .nav{
+    display:flex;justify-content:center;border-bottom:1px solid #1e3d22;
+    background:rgba(0,0,0,0.2);position:sticky;top:0;z-index:50;
+    backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+  }
+  .nav button{
+    padding:14px 18px;background:transparent;border:none;
+    border-bottom:2px solid transparent;color:#7a9b7e;font-size:13px;
+    font-weight:500;letter-spacing:0.5px;cursor:pointer;transition:all 0.2s;
+  }
+  .nav button.active{color:#c9a84c;border-bottom-color:#c9a84c;}
+  .nav button:hover{color:#e8e4da;}
+
+  .content{max-width:680px;margin:0 auto;padding:20px 16px 40px;}
+
+  .card{
+    background:rgba(255,255,255,0.03);border:1px solid #1e3d22;
+    border-radius:12px;padding:18px;margin-bottom:16px;
+  }
+  .card-label{
+    font-size:11px;letter-spacing:2.5px;text-transform:uppercase;
+    color:#c9a84c;margin-bottom:14px;font-weight:600;
+  }
+
+  .tier-header{
+    font-size:12px;letter-spacing:2px;text-transform:uppercase;
+    color:#c9a84c;font-weight:600;margin-bottom:8px;padding-bottom:6px;
+    border-bottom:1px solid rgba(30,61,34,0.5);
+  }
+
+  .golfer-row{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:10px 12px;margin-bottom:2px;border-radius:8px;
+    transition:background 0.15s;min-height:44px;
+  }
+  .golfer-row:hover{background:rgba(255,255,255,0.02);}
+  .golfer-name{font-size:15px;font-weight:500;color:#e8e4da;}
+  .golfer-odds{font-size:12px;color:#5a8a5e;margin-left:8px;font-weight:400;}
+  .golfer-num{font-size:11px;color:#3a5a3e;margin-right:6px;font-weight:500;min-width:20px;}
+
+  .owner-badge{
+    display:inline-flex;align-items:center;gap:5px;
+    border-radius:100px;padding:4px 12px;font-size:12px;font-weight:500;
+  }
+
+  .input{
+    padding:8px 12px;background:rgba(0,0,0,0.3);border:1px solid #1e3d22;
+    border-radius:8px;color:#e8e4da;font-size:14px;transition:border-color 0.2s;
+  }
+  .input-sm{padding:6px 10px;font-size:13px;border-radius:6px;}
+
+  .btn{
+    padding:8px 16px;border:none;border-radius:8px;font-size:13px;
+    font-weight:600;cursor:pointer;transition:all 0.2s;
+  }
+  .btn-gold{background:#c9a84c;color:#0b1a0e;}
+  .btn-gold:hover{background:#d4b65c;}
+  .btn-ghost{background:transparent;border:1px solid #1e3d22;color:#7a9b7e;}
+  .btn-ghost:hover{border-color:#3a5a3e;color:#e8e4da;}
+  .btn-sm{padding:5px 12px;font-size:12px;border-radius:6px;}
+
+  .bidder-chip{
+    display:inline-flex;align-items:center;gap:5px;
+    border-radius:100px;padding:4px 12px;font-size:12px;font-weight:500;
+  }
+  .bidder-dot{width:8px;height:8px;border-radius:50%;display:inline-block;flex-shrink:0;}
+
+  .stat-bar{
+    display:flex;justify-content:space-between;align-items:center;
+    background:rgba(0,0,0,0.2);border-radius:8px;padding:12px 16px;
+    margin-bottom:16px;font-size:13px;color:#7a9b7e;
+  }
+
+  .owner-card{
+    border-radius:12px;padding:14px 16px;margin-bottom:10px;
+    background:rgba(255,255,255,0.03);border:1px solid #1e3d22;
+  }
+
+  .lb-row{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:9px 12px;margin-bottom:2px;border-radius:8px;min-height:44px;
+  }
+  .lb-pos{
+    font-size:14px;font-weight:700;min-width:32px;display:inline-block;
+  }
+
+  .payout-row{
+    display:flex;justify-content:space-between;align-items:center;
+    padding:12px 0;border-bottom:1px solid rgba(30,61,34,0.3);
+  }
+
+  .empty-state{text-align:center;padding:48px 24px;color:#3a5a3e;}
+  .empty-state .icon{font-size:32px;margin-bottom:12px;}
+  .empty-state .msg{font-size:14px;line-height:1.5;}
+
+  .modal-bg{
+    position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:100;
+    display:flex;align-items:center;justify-content:center;
+    backdrop-filter:blur(4px);
+  }
+  .modal{
+    background:#0f2413;border:1px solid #1e3d22;border-radius:16px;
+    padding:32px 28px;width:300px;text-align:center;
+  }
+
+  @media(max-width:480px){
+    .header h1{font-size:28px;}
+    .content{padding:16px 12px 40px;}
+    .nav button{padding:12px 12px;font-size:12px;}
+    .golfer-name{font-size:14px;}
+  }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+
+<script>
+const firebaseConfig = {
+  apiKey: "AIzaSyAHIXVzdNTjiApVE-2gFLjIA66kUdtnNww",
+  authDomain: "masters-calcutta26.firebaseapp.com",
+  databaseURL: "https://masters-calcutta26-default-rtdb.firebaseio.com",
+  projectId: "masters-calcutta26",
+  storageBucket: "masters-calcutta26.firebasestorage.app",
+  messagingSenderId: "390751719970",
+  appId: "1:390751719970:web:d129cc7a3e836ad9db707b",
+  measurementId: "G-S7ML7V0VHQ"
+};
+let db = null;
+try { firebase.initializeApp(firebaseConfig); db = firebase.database(); } catch(e) { console.warn("Firebase not configured"); }
+</script>
+
+<script type="text/babel">
+const { useState, useEffect, useMemo, useCallback, useRef } = React;
+
+const GOLFERS = [
+  { name: "Scottie Scheffler", odds: "+410", tier: 1 },
+  { name: "Jon Rahm", odds: "+850", tier: 1 },
+  { name: "Rory McIlroy", odds: "+1025", tier: 1 },
+  { name: "Bryson DeChambeau", odds: "+1100", tier: 1 },
+  { name: "Ludvig Åberg", odds: "+1750", tier: 1 },
+  { name: "Xander Schauffele", odds: "+1850", tier: 1 },
+  { name: "Cameron Young", odds: "+2400", tier: 2 },
+  { name: "Tommy Fleetwood", odds: "+2500", tier: 2 },
+  { name: "Matt Fitzpatrick", odds: "+2600", tier: 2 },
+  { name: "Collin Morikawa", odds: "+3100", tier: 2 },
+  { name: "Justin Rose", odds: "+3600", tier: 2 },
+  { name: "Jordan Spieth", odds: "+3800", tier: 2 },
+  { name: "Brooks Koepka", odds: "+3800", tier: 2 },
+  { name: "Hideki Matsuyama", odds: "+3900", tier: 2 },
+  { name: "Robert MacIntyre", odds: "+4000", tier: 2 },
+  { name: "Russell Henley", odds: "+4200", tier: 3 },
+  { name: "Chris Gotterup", odds: "+4300", tier: 3 },
+  { name: "Patrick Reed", odds: "+4500", tier: 3 },
+  { name: "Viktor Hovland", odds: "+4600", tier: 3 },
+  { name: "Si Woo Kim", odds: "+4700", tier: 3 },
+  { name: "Min Woo Lee", odds: "+5400", tier: 3 },
+  { name: "Justin Thomas", odds: "+5500", tier: 3 },
+  { name: "Patrick Cantlay", odds: "+5700", tier: 3 },
+  { name: "Adam Scott", odds: "+6200", tier: 4 },
+  { name: "Akshay Bhatia", odds: "+6600", tier: 4 },
+  { name: "Sepp Straka", odds: "+6700", tier: 4 },
+  { name: "Jason Day", odds: "+6900", tier: 4 },
+  { name: "Jake Knapp", odds: "+6900", tier: 4 },
+  { name: "Tyrrell Hatton", odds: "+6900", tier: 4 },
+  { name: "Shane Lowry", odds: "+7000", tier: 4 },
+  { name: "Sam Burns", odds: "+7200", tier: 4 },
+  { name: "Corey Conners", odds: "+8200", tier: 4 },
+  { name: "Nicolai Højgaard", odds: "+8400", tier: 4 },
+  { name: "Kurt Kitayama", odds: "+8800", tier: 4 },
+  { name: "J.J. Spaun", odds: "+8800", tier: 4 },
+  { name: "Jacob Bridgeman", odds: "+9400", tier: 5 },
+  { name: "Maverick McNealy", odds: "+9800", tier: 5 },
+  { name: "Cameron Smith", odds: "+10000", tier: 5 },
+  { name: "Harris English", odds: "+10500", tier: 5 },
+  { name: "Gary Woodland", odds: "+11000", tier: 5 },
+  { name: "Ben Griffin", odds: "+11000", tier: 5 },
+  { name: "Daniel Berger", odds: "+11000", tier: 5 },
+  { name: "Max Homa", odds: "+11500", tier: 5 },
+  { name: "Sungjae Im", odds: "+12000", tier: 5 },
+  { name: "Rasmus Højgaard", odds: "+13000", tier: 5 },
+  { name: "Keegan Bradley", odds: "+14000", tier: 5 },
+  { name: "Harry Hall", odds: "+16000", tier: 5 },
+  { name: "Marco Penge", odds: "+16000", tier: 5 },
+  { name: "Alex Noren", odds: "+16500", tier: 5 },
+  { name: "Ryan Gerard", odds: "+17000", tier: 5 },
+];
+
+const TNAMES = {1:"Tier 1 · Favorites",2:"Tier 2 · Contenders",3:"Tier 3 · Sleepers",4:"Tier 4 · Dark Horses",5:"Tier 5 · Longshots"};
+const PAYOUTS = [
+  {place:"1st",pct:30},{place:"2nd",pct:17},{place:"3rd",pct:12},
+  {place:"4th",pct:8},{place:"5th",pct:6},{place:"6th",pct:4},
+  {place:"7th",pct:3},{place:"8th",pct:2.5},{place:"9th",pct:2},
+  {place:"10th",pct:1.5},{place:"Made Cut",pct:14,note:"split evenly"},
+];
+const PIN = "1986";
+const DPARTS = ["Kyle","Zach","Eshawn","Daniel","Logan","Camille","Monty","Conor","Geo","Tim","Cole","Trevor","Anthony","Wink","Pelayo","Jose","Mahir","Tony","Raghav","Alan"];
+const COLORS = ["#3d9b6e","#5bb88a","#2a7d5a","#7ecba4","#c9a84c","#a8c686","#e2c36b","#2d6872","#d47d5e","#e8a85c","#8596aa","#4a7fa3","#b07830","#6a7a3e","#3a5428","#d4a86e","#a0403e","#b83a30","#6cc4a8","#1a8a8a"];
+
+function shuf(a){const b=[...a];for(let i=b.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[b[i],b[j]]=[b[j],b[i]];}return b;}
+function fb(path,val){if(db)db.ref(path).set(val);}
+function fbOn(path,cb){if(db){db.ref(path).on("value",s=>cb(s.val()));return()=>db.ref(path).off("value");}return()=>{};}
+function fmt$(n){return n%1===0?"$"+n.toLocaleString():"$"+n.toFixed(2);}
+
+function App(){
+  const [ld,setLd]=useState(false);
+  const [admin,setAdmin]=useState(false);
+  const [showPin,setShowPin]=useState(false);
+  const [pin,setPin]=useState("");
+  const [pinErr,setPinErr]=useState(false);
+  const [view,setView]=useState("auction");
+  const [order,setOrder]=useState(GOLFERS.map(g=>g.name));
+  const [shuffled,setShuffled]=useState(false);
+  const [owners,setOwners]=useState({});
+  const [parts,setParts]=useState(DPARTS);
+  const [tourn,setTourn]=useState({});
+  const [nn,setNn]=useState("");
+  const [eg,setEg]=useState(null);
+  const [so,setSo]=useState("");
+  const [ba,setBa]=useState("");
+  const [es,setEs]=useState(null);
+  const [sp,setSp]=useState("");
+  const [sv,setSv]=useState("");
+  const [sthru,setSthru]=useState("");
+  const adminRef=useRef(false);
+  adminRef.current=admin;
+
+  useEffect(()=>{
+    if(!db){setLd(true);return;}
+    const u=[
+      fbOn("golferOrder",v=>{if(v)setOrder(v);}),
+      fbOn("shuffled",v=>{if(v!==null)setShuffled(v);}),
+      fbOn("owners",v=>setOwners(v||{})),
+      fbOn("participants",v=>{if(v)setParts(v);}),
+      fbOn("tournament",v=>setTourn(v||{})),
+    ];
+    setLd(true);
+    return()=>u.forEach(x=>x());
+  },[]);
+
+  const gm=useMemo(()=>{const m={};GOLFERS.forEach(g=>m[g.name]=g);return m;},[]);
+  const pc=useMemo(()=>{const m={};parts.forEach((p,i)=>m[p]=COLORS[i%COLORS.length]);return m;},[parts]);
+  const pot=useMemo(()=>Object.values(owners).reduce((s,o)=>s+(o.bid||0),0),[owners]);
+  const os=useMemo(()=>{const s={};parts.forEach(p=>s[p]={spent:0,golfers:[]});Object.entries(owners).forEach(([g,{owner,bid}])=>{if(s[owner]){s[owner].spent+=bid;s[owner].golfers.push({name:g,bid});}});return s;},[owners,parts]);
+  const tg=useMemo(()=>{const t={1:[],2:[],3:[],4:[],5:[]};order.forEach(n=>{const g=gm[n];if(g)t[g.tier].push(g);});return t;},[order,gm]);
+  const lb=useMemo(()=>{const e=Object.entries(tourn).filter(([n])=>gm[n]).map(([n,d])=>({name:n,owner:owners[n]?.owner||"—",bid:owners[n]?.bid||0,...d}));return[...e.filter(x=>x.position!=="MC").sort((a,b)=>(a.position||999)-(b.position||999)),...e.filter(x=>x.position==="MC").sort((a,b)=>a.name.localeCompare(b.name))];},[tourn,owners,gm]);
+
+  const earnings=useMemo(()=>{
+    const e={};parts.forEach(p=>e[p]=0);if(!pot)return e;
+    const cutOwners=[];
+    lb.forEach(x=>{if(x.position==="MC"||!x.position||x.owner==="—")return;if(x.position<=10){const p=PAYOUTS[x.position-1];if(p)e[x.owner]=(e[x.owner]||0)+pot*p.pct/100;}else cutOwners.push(x.owner);});
+    if(cutOwners.length>0){const share=pot*14/100/cutOwners.length;cutOwners.forEach(o=>e[o]=(e[o]||0)+share);}
+    return e;
+  },[lb,pot,parts]);
+
+  const doShuffle=()=>{const no=[];[1,2,3,4,5].forEach(t=>no.push(...shuf(GOLFERS.filter(g=>g.tier===t).map(g=>g.name))));setOrder(no);setShuffled(true);fb("golferOrder",no);fb("shuffled",true);};
+  const assign=(g)=>{if(!so||!ba)return;const n={...owners,[g]:{owner:so,bid:parseFloat(ba)}};setOwners(n);fb("owners",n);setEg(null);setSo("");setBa("");};
+  const unassign=(g)=>{const n={...owners};delete n[g];setOwners(n);fb("owners",n);};
+  const addP=()=>{const t=nn.trim();if(t&&!parts.includes(t)){const np=[...parts,t];setParts(np);fb("participants",np);setNn("");}};
+  const remP=(name)=>{const np=parts.filter(x=>x!==name);setParts(np);fb("participants",np);const no={...owners};Object.keys(no).forEach(k=>{if(no[k].owner===name)delete no[k];});setOwners(no);fb("owners",no);};
+  const saveSc=(g)=>{const pos=sp.toUpperCase()==="MC"?"MC":parseInt(sp)||null;if(!pos)return;const nt={...tourn,[g]:{position:pos,score:sv,thru:sthru}};setTourn(nt);fb("tournament",nt);setEs(null);setSp("");setSv("");setSthru("");};
+  const remSc=(n)=>{const nt={...tourn};delete nt[n];setTourn(nt);fb("tournament",nt);};
+
+  const tryPin=()=>{if(pin===PIN){setAdmin(true);setShowPin(false);setPin("");setPinErr(false);}else setPinErr(true);};
+
+  if(!ld)return <div style={{background:"#0b1a0e",color:"#7a9b7e",minHeight:"100vh",display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"'DM Sans',sans-serif",fontSize:"15px"}}>Loading...</div>;
+
+  return(
+  <div>
+    {/* PIN MODAL */}
+    {showPin&&<div className="modal-bg" onClick={()=>{setShowPin(false);setPin("");setPinErr(false);}}>
+      <div className="modal" onClick={e=>e.stopPropagation()}>
+        <div style={{fontSize:"11px",letterSpacing:"3px",color:"#c9a84c",marginBottom:"20px",textTransform:"uppercase",fontWeight:"600"}}>Commissioner Access</div>
+        <input type="password" maxLength={4} value={pin} onChange={e=>{setPin(e.target.value);setPinErr(false);}} onKeyDown={e=>e.key==="Enter"&&tryPin()} placeholder="Enter PIN" autoFocus
+          className="input" style={{width:"140px",textAlign:"center",fontSize:"22px",letterSpacing:"8px",display:"block",margin:"0 auto 16px",borderColor:pinErr?"#d47d5e":"#1e3d22"}}/>
+        {pinErr&&<div style={{fontSize:"13px",color:"#d47d5e",marginBottom:"10px"}}>Wrong PIN</div>}
+        <button onClick={tryPin} className="btn btn-gold" style={{padding:"10px 32px",fontSize:"14px"}}>Unlock</button>
+      </div>
+    </div>}
+
+    {/* HEADER */}
+    <div className="header">
+      <div className="header-sub">A Tradition Unlike Any Other</div>
+      <h1>The Masters Calcutta</h1>
+      <div className="header-date">Augusta National · April 9–13, 2026</div>
+      <div className="header-meta">
+        {pot>0&&<span className="pill pill-gold">Pot: {fmt$(pot)}</span>}
+        <button className={`pill ${admin?"pill-gold":"pill-muted"}`} onClick={()=>admin?setAdmin(false):setShowPin(true)}>
+          {admin?"🔓 Commissioner":"🔒 Admin"}
+        </button>
+      </div>
+    </div>
+
+    {/* NAV */}
+    <div className="nav">
+      {[["auction","Auction"],["owners","Owners"],["leaderboard","Leaderboard"],["payouts","Payouts"]].map(([k,l])=>
+        <button key={k} className={view===k?"active":""} onClick={()=>setView(k)}>{l}</button>
+      )}
+    </div>
+
+    <div className="content">
+
+    {/* ===== AUCTION ===== */}
+    {view==="auction"&&<>
+      {admin&&<div className="card">
+        <div className="card-label">Bidders ({parts.length})</div>
+        <div style={{display:"flex",flexWrap:"wrap",gap:"6px",marginBottom:"14px"}}>
+          {parts.map(p=><div key={p} className="bidder-chip" style={{background:pc[p]+"22",border:`1px solid ${pc[p]}55`}}>
+            <span className="bidder-dot" style={{background:pc[p]}}/>
+            <span style={{color:"#e8e4da"}}>{p}</span>
+            <span onClick={()=>remP(p)} style={{cursor:"pointer",color:"#7a9b7e",fontSize:"11px",marginLeft:"2px"}}>✕</span>
+          </div>)}
+        </div>
+        <div style={{display:"flex",gap:"8px"}}>
+          <input value={nn} onChange={e=>setNn(e.target.value)} onKeyDown={e=>e.key==="Enter"&&addP()} placeholder="Add bidder..." className="input" style={{flex:1}}/>
+          <button onClick={addP} className="btn btn-gold btn-sm">Add</button>
+        </div>
+      </div>}
+
+      <div className="stat-bar">
+        <span style={{fontWeight:500}}>{Object.keys(owners).length} of 50 golfers sold</span>
+        <div style={{display:"flex",alignItems:"center",gap:"10px"}}>
+          {pot>0&&<span style={{color:"#c9a84c",fontWeight:600}}>{fmt$(pot)}</span>}
+          {admin&&<button onClick={doShuffle} className="btn btn-ghost btn-sm">🎲 {shuffled?"Reshuffle":"Shuffle"}</button>}
+        </div>
+      </div>
+
+      {!admin&&<div style={{display:"flex",flexWrap:"wrap",gap:"8px",marginBottom:"18px"}}>
+        {parts.map(p=><div key={p} style={{display:"flex",alignItems:"center",gap:"4px",fontSize:"12px",color:"#7a9b7e"}}>
+          <span className="bidder-dot" style={{background:pc[p],width:"6px",height:"6px"}}/>{p}
+        </div>)}
+      </div>}
+
+      {[1,2,3,4,5].map(tier=><div key={tier} style={{marginBottom:"24px"}}>
+        <div className="tier-header">{TNAMES[tier]}</div>
+        {tg[tier].map((g,idx)=>{const ow=owners[g.name];const isE=eg===g.name;
+        return <div key={g.name} className="golfer-row" style={{
+          background:ow?`${pc[ow.owner]||"#555"}15`:"transparent",
+          border:ow?`1px solid ${pc[ow.owner]||"#555"}33`:"1px solid transparent",
+        }}>
+          <div style={{flex:1,minWidth:0,display:"flex",alignItems:"center"}}>
+            <span className="golfer-num">{idx+1}</span>
+            <span className="golfer-name">{g.name}</span>
+            <span className="golfer-odds">{g.odds}</span>
+          </div>
+          {admin&&isE?<div style={{display:"flex",gap:"5px",alignItems:"center",flexShrink:0}}>
+            <select value={so} onChange={e=>setSo(e.target.value)} className="input input-sm" style={{maxWidth:"100px"}}>
+              <option value="">Owner</option>{parts.map(p=><option key={p} value={p}>{p}</option>)}</select>
+            <div style={{position:"relative"}}>
+              <span style={{position:"absolute",left:"10px",top:"50%",transform:"translateY(-50%)",color:"#5a8a5e",fontSize:"13px",pointerEvents:"none"}}>$</span>
+              <input type="number" value={ba} onChange={e=>setBa(e.target.value)} placeholder="0" className="input input-sm" style={{width:"65px",paddingLeft:"22px"}}/>
+            </div>
+            <button onClick={()=>assign(g.name)} className="btn btn-gold btn-sm" style={{padding:"5px 10px"}}>✓</button>
+            <button onClick={()=>{setEg(null);setSo("");setBa("");}} className="btn btn-ghost btn-sm" style={{padding:"5px 8px"}}>✕</button>
+          </div>:ow?<div style={{display:"flex",alignItems:"center",gap:"6px",flexShrink:0}}>
+            <span className="owner-badge" style={{background:pc[ow.owner]+"30",border:`1px solid ${pc[ow.owner]}55`,color:"#e8e4da"}}>{ow.owner} · {fmt$(ow.bid)}</span>
+            {admin&&<span onClick={()=>{setEg(g.name);setSo(ow.owner);setBa(String(ow.bid));}} style={{cursor:"pointer",color:"#7a9b7e",fontSize:"12px"}}>✎</span>}
+            {admin&&<span onClick={()=>unassign(g.name)} style={{cursor:"pointer",color:"#3a5a3e",fontSize:"12px"}}>✕</span>}
+          </div>:admin?<button onClick={()=>setEg(g.name)} className="btn btn-ghost btn-sm">Assign</button>
+          :<span style={{fontSize:"12px",color:"#2a4a2e"}}>—</span>}
+        </div>;})}
+      </div>)}
+    </>}
+
+    {/* ===== OWNERS ===== */}
+    {view==="owners"&&<>
+      {[...parts].sort((a,b)=>(os[b]?.spent||0)-(os[a]?.spent||0)).map(p=>{
+        const s=os[p]||{spent:0,golfers:[]};
+        const earn=earnings[p]||0;
+        const net=earn-s.spent;
+        return <div key={p} className="owner-card" style={{borderLeft:`3px solid ${pc[p]}`}}>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"6px"}}>
+            <div style={{display:"flex",alignItems:"center",gap:"8px"}}>
+              <span className="bidder-dot" style={{background:pc[p]}}/>
+              <span style={{fontSize:"16px",fontWeight:"600"}}>{p}</span>
+            </div>
+            <div style={{textAlign:"right",fontSize:"13px"}}>
+              <span style={{color:"#c9a84c",fontWeight:"600"}}>{fmt$(s.spent)} in</span>
+              {earn>0&&<span style={{color:"#5bb88a",marginLeft:"10px",fontWeight:"600"}}>+{fmt$(earn)} out</span>}
+            </div>
+          </div>
+          {s.golfers.length>0?<div style={{display:"flex",flexWrap:"wrap",gap:"5px",marginTop:"4px"}}>
+            {s.golfers.sort((a,b)=>b.bid-a.bid).map(g=>{
+              const t=tourn[g.name];
+              return <span key={g.name} style={{fontSize:"12px",background:"rgba(0,0,0,0.25)",padding:"3px 10px",borderRadius:"100px",color:"#7a9b7e"}}>
+                {g.name} <span style={{color:"#c9a84c"}}>{fmt$(g.bid)}</span>
+                {t&&<span style={{color:t.position==="MC"?"#d47d5e":"#5bb88a",marginLeft:"4px"}}>{t.position==="MC"?"MC":t.position}</span>}
+              </span>;
+            })}
+          </div>:<span style={{fontSize:"13px",color:"#2a4a2e"}}>No golfers yet</span>}
+        </div>;
+      })}
+      {pot>0&&<div style={{textAlign:"center",marginTop:"20px",padding:"16px",background:"rgba(201,168,76,0.08)",borderRadius:"12px",border:"1px solid rgba(201,168,76,0.2)"}}>
+        <div style={{fontSize:"11px",letterSpacing:"2px",color:"#7a9b7e",marginBottom:"4px",fontWeight:"500"}}>TOTAL POT</div>
+        <div style={{fontSize:"32px",color:"#c9a84c",fontWeight:"700",fontFamily:"'Playfair Display',serif"}}>{fmt$(pot)}</div>
+      </div>}
+    </>}
+
+    {/* ===== LEADERBOARD ===== */}
+    {view==="leaderboard"&&<>
+      {admin&&<div className="card">
+        <div className="card-label">Update Scores</div>
+        <div style={{display:"flex",gap:"6px",flexWrap:"wrap"}}>
+          <select value={es||""} onChange={e=>{setEs(e.target.value);setSp("");setSv("");setSthru("");}} className="input" style={{flex:"1 1 140px",fontSize:"14px"}}>
+            <option value="">Select golfer...</option>{GOLFERS.map(g=><option key={g.name} value={g.name}>{g.name}</option>)}
+          </select>
+          <input value={sp} onChange={e=>setSp(e.target.value)} placeholder="Pos / MC" className="input input-sm" style={{width:"72px"}}/>
+          <input value={sv} onChange={e=>setSv(e.target.value)} placeholder="Score" className="input input-sm" style={{width:"64px"}}/>
+          <input value={sthru} onChange={e=>setSthru(e.target.value)} placeholder="Thru" className="input input-sm" style={{width:"52px"}}/>
+          <button onClick={()=>es&&saveSc(es)} className="btn btn-gold btn-sm">Save</button>
+        </div>
+      </div>}
+
+      {lb.length===0?<div className="empty-state">
+        <div className="icon">⛳</div>
+        <div className="msg">{admin?"Add tournament scores above to get started.":"Leaderboard will update once the tournament begins Thursday."}</div>
+      </div>:lb.map((e,i)=>{
+        const mc=e.position==="MC";
+        const po=!mc&&e.position<=10?PAYOUTS[e.position-1]:null;
+        const pa=po&&pot>0?(pot*po.pct/100):null;
+        const ic=!mc&&e.position>10;
+        const oc=pc[e.owner]||"#3a5a3e";
+        return <div key={e.name} className="lb-row" style={{
+          background:mc?"rgba(212,125,94,0.06)":e.position<=3?"rgba(201,168,76,0.08)":"transparent",
+          borderLeft:`3px solid ${mc?"#d47d5e44":e.position<=3?"#c9a84c":e.position<=10?"#5bb88a55":"#1e3d2244"}`,
+        }}>
+          <div style={{flex:1,minWidth:0,display:"flex",alignItems:"center",gap:"4px"}}>
+            <span className="lb-pos" style={{color:mc?"#d47d5e":"#c9a84c"}}>{mc?"MC":e.position}</span>
+            <div>
+              <span className="golfer-name" style={{fontSize:"14px"}}>{e.name}</span>
+              {e.score&&<span style={{fontSize:"12px",color:"#7a9b7e",marginLeft:"8px"}}>{e.score}</span>}
+              {e.thru&&<span style={{fontSize:"11px",color:"#3a5a3e",marginLeft:"4px"}}>thru {e.thru}</span>}
+            </div>
+          </div>
+          <div style={{display:"flex",alignItems:"center",gap:"8px",flexShrink:0}}>
+            {pa&&<span style={{fontSize:"13px",color:"#5bb88a",fontWeight:"600"}}>{fmt$(pa)}</span>}
+            {ic&&<span style={{fontSize:"11px",color:"#5a8a5e",fontWeight:"500"}}>cut</span>}
+            <span className="owner-badge" style={{background:oc+"25",border:`1px solid ${oc}44`,color:"#e8e4da",fontSize:"11px"}}>{e.owner}</span>
+            {admin&&<>
+              <span onClick={()=>{setEs(e.name);setSp(String(e.position));setSv(e.score||"");setSthru(e.thru||"");window.scrollTo(0,0);}} style={{cursor:"pointer",color:"#7a9b7e",fontSize:"12px"}}>✎</span>
+              <span onClick={()=>remSc(e.name)} style={{cursor:"pointer",color:"#3a5a3e",fontSize:"12px"}}>✕</span>
+            </>}
+          </div>
+        </div>;
+      })}
+    </>}
+
+    {/* ===== PAYOUTS ===== */}
+    {view==="payouts"&&<div>
+      <div className="card">
+        <div className="card-label">Payout Structure{pot>0&&` · ${fmt$(pot)} pot`}</div>
+        {PAYOUTS.map(p=>{const a=pot>0?(pot*p.pct/100):0;return(
+          <div key={p.place} className="payout-row">
+            <div>
+              <span style={{fontSize:"15px",fontWeight:p.place==="Made Cut"?400:500,color:p.place==="Made Cut"?"#7a9b7e":"#e8e4da"}}>{p.place}</span>
+              {p.note&&<span style={{fontSize:"12px",color:"#3a5a3e",marginLeft:"8px"}}>({p.note})</span>}
+            </div>
+            <div style={{display:"flex",alignItems:"center",gap:"12px"}}>
+              {pot>0&&<span style={{fontSize:"14px",color:"#7a9b7e"}}>{fmt$(a)}</span>}
+              <span style={{fontSize:"15px",color:"#c9a84c",fontWeight:"600",minWidth:"42px",textAlign:"right"}}>{p.pct}%</span>
+            </div>
+          </div>
+        );})}
+      </div>
+
+      <div className="card" style={{lineHeight:"1.8",fontSize:"14px",color:"#7a9b7e"}}>
+        <div className="card-label">Rules</div>
+        <p style={{marginBottom:"8px"}}>True Calcutta format. You bid real dollars with no bankroll cap. The prize pool equals the total of all winning bids.</p>
+        <p style={{marginBottom:"8px"}}>50 golfers are auctioned individually across 5 tiers. Ascending bid with a $1 minimum to open and $1 minimum raise.</p>
+        <p style={{marginBottom:"8px"}}>Everyone must own at least one golfer. All payments due to the commissioner via Venmo before Thursday's first tee.</p>
+        <p style={{marginBottom:"8px"}}>Missed cuts pay nothing. Golfers who make the cut but finish outside the top 10 split 14% of the pot evenly among their owners.</p>
+        <p>If a golfer outside our 50-player pool finishes in the top 10, that payout position rolls into the cut pool. Ties split the combined payout of the tied positions.</p>
+      </div>
+    </div>}
+
+    </div>
+  </div>);
+}
+ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
+</script>
+</body>
+</html>
