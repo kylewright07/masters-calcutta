@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>The Masters Calcutta 2026</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Georgia', 'Times New Roman', serif;
+    background: linear-gradient(180deg, #0a3d0c 0%, #064e0e 40%, #0a3d0c 100%);
+    color: #f5f0e1;
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+  }
+  input, select, button { font-family: inherit; }
+  input:focus, select:focus { outline: none; }
+  ::placeholder { color: #4a7a4e; }
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: #1a5e1f; border-radius: 3px; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+
+<script>
+// =============================================================
+// FIREBASE CONFIG — REPLACE THIS WITH YOUR VALUES
+// =============================================================
+const firebaseConfig = {
+  apiKey: "YOUR_API_KEY",
+  authDomain: "YOUR_PROJECT.firebaseapp.com",
+  databaseURL: "https://YOUR_PROJECT-default-rtdb.firebaseio.com",
+  projectId: "YOUR_PROJECT",
+  storageBucket: "YOUR_PROJECT.appspot.com",
+  messagingSenderId: "000000000000",
+  appId: "YOUR_APP_ID"
+};
+// =============================================================
+
+let db = null;
+try {
+  firebase.initializeApp(firebaseConfig);
+  db = firebase.database();
+} catch(e) {
+  console.warn("Firebase not configured, running in local mode");
+}
+</script>
+
+<script type="text/babel">
+const { useState, useEffect, useMemo, useCallback, useRef } = React;
+
+const DEFAULT_GOLFERS = [
+  { name: "Scottie Scheffler", odds: "+410", tier: 1 },
+  { name: "Jon Rahm", odds: "+850", tier: 1 },
+  { name: "Rory McIlroy", odds: "+1025", tier: 1 },
+  { name: "Bryson DeChambeau", odds: "+1100", tier: 1 },
+  { name: "Ludvig Åberg", odds: "+1750", tier: 1 },
+  { name: "Xander Schauffele", odds: "+1850", tier: 1 },
+  { name: "Cameron Young", odds: "+2400", tier: 2 },
+  { name: "Tommy Fleetwood", odds: "+2500", tier: 2 },
+  { name: "Matt Fitzpatrick", odds: "+2600", tier: 2 },
+  { name: "Collin Morikawa", odds: "+3100", tier: 2 },
+  { name: "Justin Rose", odds: "+3600", tier: 2 },
+  { name: "Jordan Spieth", odds: "+3800", tier: 2 },
+  { name: "Brooks Koepka", odds: "+3800", tier: 2 },
+  { name: "Hideki Matsuyama", odds: "+3900", tier: 2 },
+  { name: "Robert MacIntyre", odds: "+4000", tier: 2 },
+  { name: "Russell Henley", odds: "+4200", tier: 3 },
+  { name: "Chris Gotterup", odds: "+4300", tier: 3 },
+  { name: "Patrick Reed", odds: "+4500", tier: 3 },
+  { name: "Viktor Hovland", odds: "+4600", tier: 3 },
+  { name: "Si Woo Kim", odds: "+4700", tier: 3 },
+  { name: "Min Woo Lee", odds: "+5400", tier: 3 },
+  { name: "Justin Thomas", odds: "+5500", tier: 3 },
+  { name: "Patrick Cantlay", odds: "+5700", tier: 3 },
+  { name: "Adam Scott", odds: "+6200", tier: 4 },
+  { name: "Akshay Bhatia", odds: "+6600", tier: 4 },
+  { name: "Sepp Straka", odds: "+6700", tier: 4 },
+  { name: "Jason Day", odds: "+6900", tier: 4 },
+  { name: "Jake Knapp", odds: "+6900", tier: 4 },
+  { name: "Tyrrell Hatton", odds: "+6900", tier: 4 },
+  { name: "Shane Lowry", odds: "+7000", tier: 4 },
+  { name: "Sam Burns", odds: "+7200", tier: 4 },
+  { name: "Corey Conners", odds: "+8200", tier: 4 },
+  { name: "Nicolai Højgaard", odds: "+8400", tier: 4 },
+  { name: "Kurt Kitayama", odds: "+8800", tier: 4 },
+  { name: "J.J. Spaun", odds: "+8800", tier: 4 },
+  { name: "Jacob Bridgeman", odds: "+9400", tier: 5 },
+  { name: "Maverick McNealy", odds: "+9800", tier: 5 },
+  { name: "Cameron Smith", odds: "+10000", tier: 5 },
+  { name: "Harris English", odds: "+10500", tier: 5 },
+  { name: "Gary Woodland", odds: "+11000", tier: 5 },
+  { name: "Ben Griffin", odds: "+11000", tier: 5 },
+  { name: "Daniel Berger", odds: "+11000", tier: 5 },
+  { name: "Max Homa", odds: "+11500", tier: 5 },
+  { name: "Sungjae Im", odds: "+12000", tier: 5 },
+  { name: "Rasmus Højgaard", odds: "+13000", tier: 5 },
+  { name: "Keegan Bradley", odds: "+14000", tier: 5 },
+  { name: "Harry Hall", odds: "+16000", tier: 5 },
+  { name: "Marco Penge", odds: "+16000", tier: 5 },
+  { name: "Alex Noren", odds: "+16500", tier: 5 },
+  { name: "Ryan Gerard", odds: "+17000", tier: 5 },
+];
+
+const TIER_NAMES = { 1: "Tier 1: Favorites", 2: "Tier 2: Contenders", 3: "Tier 3: Sleepers", 4: "Tier 4: Dark Horses", 5: "Tier 5: Longshots" };
+
+const PAYOUTS = [
+  { place: "1st", pct: 30 }, { place: "2nd", pct: 17 }, { place: "3rd", pct: 12 },
+  { place: "4th", pct: 8 }, { place: "5th", pct: 6 }, { place: "6th", pct: 4 },
+  { place: "7th", pct: 3 }, { place: "8th", pct: 2.5 }, { place: "9th", pct: 2 },
+  { place: "10th", pct: 1.5 }, { place: "Made Cut", pct: 14, note: "split evenly" },
+];
+
+const ADMIN_PIN = "1986";
+
+const DEFAULT_PARTICIPANTS = [
+  "Kyle", "Zach", "Eshawn", "Daniel", "Logan", "Camille",
+  "Monty", "Conor", "Geo", "Tim", "Cole", "Trevor",
+  "Anthony", "Wink", "Pelayo", "Jose", "Mahir", "Tony",
+  "Raghav", "Alan"
+];
+
+const COLORS = [
+  "#2D6A4F","#40916C","#52B788","#74C69D","#D4A373","#CCD5AE",
+  "#E9C46A","#264653","#E76F51","#F4A261","#8D99AE","#457B9D",
+  "#BC6C25","#606C38","#283618","#DDA15E","#9B2226","#AE2012",
+  "#94D2BD","#0A9396"
+];
+
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+// Firebase helpers
+function fbSet(path, val) {
+  if (db) db.ref(path).set(val);
+}
+function fbListen(path, cb) {
+  if (db) {
+    db.ref(path).on("value", snap => { cb(snap.val()); });
+    return () => db.ref(path).off("value");
+  }
+  return () => {};
+}
+
+function App() {
+  const [loaded, setLoaded] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [showPinModal, setShowPinModal] = useState(false);
+  const [pinInput, setPinInput] = useState("");
+  const [pinError, setPinError] = useState(false);
+  const [view, setView] = useState("auction");
+
+  const [golferOrder, setGolferOrder] = useState(DEFAULT_GOLFERS.map(g => g.name));
+  const [shuffled, setShuffled] = useState(false);
+  const [owners, setOwners] = useState({});
+  const [participants, setParticipants] = useState(DEFAULT_PARTICIPANTS);
+  const [tournament, setTournament] = useState({});
+
+  const [newName, setNewName] = useState("");
+  const [editingGolfer, setEditingGolfer] = useState(null);
+  const [selectedOwner, setSelectedOwner] = useState("");
+  const [bidAmount, setBidAmount] = useState("");
+  const [editingScore, setEditingScore] = useState(null);
+  const [scorePos, setScorePos] = useState("");
+  const [scoreVal, setScoreVal] = useState("");
+  const [scoreThru, setScoreThru] = useState("");
+
+  const isAdminRef = useRef(false);
+  isAdminRef.current = isAdmin;
+
+  // Firebase listeners
+  useEffect(() => {
+    if (!db) { setLoaded(true); return; }
+
+    const unsubs = [
+      fbListen("golferOrder", val => { if (val && !isAdminRef.current) setGolferOrder(val); else if (val) setGolferOrder(val); }),
+      fbListen("shuffled", val => { if (val !== null) setShuffled(val); }),
+      fbListen("owners", val => setOwners(val || {})),
+      fbListen("participants", val => { if (val) setParticipants(val); }),
+      fbListen("tournament", val => setTournament(val || {})),
+    ];
+    setLoaded(true);
+    return () => unsubs.forEach(u => u());
+  }, []);
+
+  const golferMap = useMemo(() => {
+    const m = {};
+    DEFAULT_GOLFERS.forEach(g => { m[g.name] = g; });
+    return m;
+  }, []);
+
+  const participantColors = useMemo(() => {
+    const m = {};
+    participants.forEach((p, i) => { m[p] = COLORS[i % COLORS.length]; });
+    return m;
+  }, [participants]);
+
+  const totalPot = useMemo(() => Object.values(owners).reduce((s, o) => s + (o.bid || 0), 0), [owners]);
+
+  const ownerStats = useMemo(() => {
+    const s = {};
+    participants.forEach(p => { s[p] = { spent: 0, golfers: [] }; });
+    Object.entries(owners).forEach(([g, { owner, bid }]) => {
+      if (s[owner]) { s[owner].spent += bid; s[owner].golfers.push({ name: g, bid }); }
+    });
+    return s;
+  }, [owners, participants]);
+
+  const tieredGolfers = useMemo(() => {
+    const tiers = { 1: [], 2: [], 3: [], 4: [], 5: [] };
+    golferOrder.forEach(name => { const g = golferMap[name]; if (g) tiers[g.tier].push(g); });
+    return tiers;
+  }, [golferOrder, golferMap]);
+
+  const leaderboard = useMemo(() => {
+    const entries = Object.entries(tournament)
+      .filter(([n]) => golferMap[n])
+      .map(([n, d]) => ({ name: n, owner: owners[n]?.owner || "Unowned", bid: owners[n]?.bid || 0, ...d }));
+    const active = entries.filter(e => e.position !== "MC").sort((a, b) => (a.position || 999) - (b.position || 999));
+    const mc = entries.filter(e => e.position === "MC").sort((a, b) => a.name.localeCompare(b.name));
+    return [...active, ...mc];
+  }, [tournament, owners, golferMap]);
+
+  // Earnings per participant
+  const participantEarnings = useMemo(() => {
+    const earnings = {};
+    participants.forEach(p => { earnings[p] = 0; });
+    if (totalPot === 0) return earnings;
+
+    const cutGolfers = [];
+    leaderboard.forEach(e => {
+      if (e.position === "MC" || !e.position) return;
+      if (e.owner === "Unowned") return;
+      if (e.position <= 10) {
+        const p = PAYOUTS[e.position - 1];
+        if (p) earnings[e.owner] = (earnings[e.owner] || 0) + totalPot * p.pct / 100;
+      } else {
+        cutGolfers.push(e.owner);
+      }
+    });
+    if (cutGolfers.length > 0) {
+      const cutShare = (totalPot * 14 / 100) / cutGolfers.length;
+      cutGolfers.forEach(o => { earnings[o] = (earnings[o] || 0) + cutShare; });
+    }
+    return earnings;
+  }, [leaderboard, totalPot, participants]);
+
+  const handleShuffle = () => {
+    const newOrder = [];
+    [1,2,3,4,5].forEach(tier => {
+      newOrder.push(...shuffle(DEFAULT_GOLFERS.filter(g => g.tier === tier).map(g => g.name)));
+    });
+    setGolferOrder(newOrder);
+    setShuffled(true);
+    fbSet("golferOrder", newOrder);
+    fbSet("shuffled", true);
+  };
+
+  const assignGolfer = (golfer) => {
+    if (!selectedOwner || !bidAmount) return;
+    const newOwners = { ...owners, [golfer]: { owner: selectedOwner, bid: parseFloat(bidAmount) } };
+    setOwners(newOwners);
+    fbSet("owners", newOwners);
+    setEditingGolfer(null); setSelectedOwner(""); setBidAmount("");
+  };
+
+  const removeOwner = (g) => {
+    const n = { ...owners }; delete n[g]; setOwners(n); fbSet("owners", n);
+  };
+
+  const addParticipant = () => {
+    const t = newName.trim();
+    if (t && !participants.includes(t)) {
+      const np = [...participants, t]; setParticipants(np); fbSet("participants", np); setNewName("");
+    }
+  };
+
+  const removeParticipant = (name) => {
+    const np = participants.filter(x => x !== name); setParticipants(np); fbSet("participants", np);
+    const no = { ...owners }; Object.keys(no).forEach(k => { if (no[k].owner === name) delete no[k]; });
+    setOwners(no); fbSet("owners", no);
+  };
+
+  const saveScore = (golferName) => {
+    const pos = scorePos.toUpperCase() === "MC" ? "MC" : parseInt(scorePos) || null;
+    if (!pos) return;
+    const nt = { ...tournament, [golferName]: { position: pos, score: scoreVal || "", thru: scoreThru || "" } };
+    setTournament(nt); fbSet("tournament", nt);
+    setEditingScore(null); setScorePos(""); setScoreVal(""); setScoreThru("");
+  };
+
+  const removeScore = (name) => {
+    const nt = { ...tournament }; delete nt[name]; setTournament(nt); fbSet("tournament", nt);
+  };
+
+  const tryPin = () => {
+    if (pinInput === ADMIN_PIN) { setIsAdmin(true); setShowPinModal(false); setPinInput(""); setPinError(false); }
+    else setPinError(true);
+  };
+
+  const inp = {
+    padding: "6px 10px", background: "rgba(0,0,0,0.35)", border: "1px solid #1a5e1f",
+    borderRadius: "4px", color: "#f5f0e1", fontSize: "13px", fontFamily: "inherit", outline: "none",
+  };
+
+  if (!loaded) return (
+    <div style={{ fontFamily: "'Georgia', serif", background: "#0a3d0c", color: "#8fbc8f", minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center" }}>Loading...</div>
+  );
+
+  return (
+    <div style={{ position: "relative" }}>
+
+      {/* PIN MODAL */}
+      {showPinModal && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)", zIndex: 100, display: "flex", alignItems: "center", justifyContent: "center" }}
+          onClick={() => { setShowPinModal(false); setPinInput(""); setPinError(false); }}>
+          <div onClick={e => e.stopPropagation()} style={{ background: "#0d4a10", border: "1px solid #1a5e1f", borderRadius: "12px", padding: "28px 24px", width: "280px", textAlign: "center" }}>
+            <div style={{ fontSize: "10px", letterSpacing: "3px", color: "#d4af37", marginBottom: "16px", textTransform: "uppercase" }}>Commissioner Access</div>
+            <input type="password" maxLength={4} value={pinInput}
+              onChange={e => { setPinInput(e.target.value); setPinError(false); }}
+              onKeyDown={e => e.key === "Enter" && tryPin()}
+              placeholder="PIN" autoFocus
+              style={{ ...inp, width: "120px", textAlign: "center", fontSize: "24px", letterSpacing: "10px", display: "block", margin: "0 auto 12px", borderColor: pinError ? "#E76F51" : "#1a5e1f" }} />
+            {pinError && <div style={{ fontSize: "11px", color: "#E76F51", marginBottom: "8px" }}>Wrong PIN</div>}
+            <button onClick={tryPin} style={{ padding: "8px 24px", background: "#d4af37", border: "none", borderRadius: "6px", color: "#0a3d0c", fontSize: "12px", fontWeight: "bold", cursor: "pointer", letterSpacing: "1px" }}>UNLOCK</button>
+          </div>
+        </div>
+      )}
+
+      {/* Header */}
+      <div style={{ textAlign: "center", padding: "28px 16px 18px", borderBottom: "2px solid #1a5e1f", background: "linear-gradient(180deg, rgba(0,0,0,0.3) 0%, transparent 100%)" }}>
+        <div style={{ fontSize: "10px", letterSpacing: "6px", textTransform: "uppercase", color: "#d4af37", marginBottom: "6px" }}>A Tradition Unlike Any Other</div>
+        <h1 style={{ fontSize: "30px", fontWeight: "400", margin: "0 0 4px", color: "#fff", letterSpacing: "1px" }}>The Masters Calcutta</h1>
+        <div style={{ fontSize: "11px", color: "#8fbc8f", letterSpacing: "3px", textTransform: "uppercase" }}>Augusta National · April 9–13, 2026</div>
+        <div style={{ marginTop: "10px", display: "flex", justifyContent: "center", alignItems: "center", gap: "10px", flexWrap: "wrap" }}>
+          {totalPot > 0 && (
+            <span style={{ background: "rgba(212,175,55,0.15)", border: "1px solid #d4af3766", borderRadius: "20px", padding: "5px 16px", fontSize: "13px", color: "#d4af37" }}>
+              Pot: <strong>${totalPot.toLocaleString()}</strong>
+            </span>
+          )}
+          <button onClick={() => isAdmin ? setIsAdmin(false) : setShowPinModal(true)} style={{
+            background: isAdmin ? "rgba(212,175,55,0.2)" : "rgba(0,0,0,0.2)",
+            border: `1px solid ${isAdmin ? "#d4af37" : "#1a5e1f"}`,
+            borderRadius: "20px", padding: "5px 12px", fontSize: "11px",
+            color: isAdmin ? "#d4af37" : "#8fbc8f", cursor: "pointer", fontFamily: "inherit",
+          }}>{isAdmin ? "🔓 Commissioner" : "🔒"}</button>
+        </div>
+      </div>
+
+      {/* Nav */}
+      <div style={{ display: "flex", justifyContent: "center", borderBottom: "1px solid #1a5e1f", background: "rgba(0,0,0,0.15)", flexWrap: "wrap" }}>
+        {[["auction","Auction"],["owners","Owners"],["leaderboard","Leaderboard"],["payouts","Payouts"]].map(([k,l]) => (
+          <button key={k} onClick={() => setView(k)} style={{
+            padding: "11px 14px", background: view === k ? "rgba(212,175,55,0.15)" : "transparent",
+            border: "none", borderBottom: view === k ? "2px solid #d4af37" : "2px solid transparent",
+            color: view === k ? "#d4af37" : "#8fbc8f", fontSize: "10px", letterSpacing: "2px",
+            textTransform: "uppercase", cursor: "pointer", fontFamily: "'Georgia', serif",
+          }}>{l}</button>
+        ))}
+      </div>
+
+      <div style={{ maxWidth: "720px", margin: "0 auto", padding: "16px" }}>
+
+        {/* ========== AUCTION ========== */}
+        {view === "auction" && (<>
+          {isAdmin && (
+            <div style={{ background: "rgba(0,0,0,0.2)", borderRadius: "8px", padding: "14px", marginBottom: "16px", border: "1px solid #1a5e1f" }}>
+              <div style={{ fontSize: "10px", letterSpacing: "3px", textTransform: "uppercase", color: "#d4af37", marginBottom: "10px" }}>Bidders ({participants.length})</div>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: "5px", marginBottom: "10px" }}>
+                {participants.map(p => (
+                  <div key={p} style={{ display: "flex", alignItems: "center", gap: "4px", background: participantColors[p] + "33", border: `1px solid ${participantColors[p]}77`, borderRadius: "14px", padding: "2px 9px", fontSize: "11px" }}>
+                    <span style={{ width: "6px", height: "6px", borderRadius: "50%", background: participantColors[p], display: "inline-block" }} />
+                    {p}
+                    <span onClick={() => removeParticipant(p)} style={{ cursor: "pointer", color: "#8fbc8f", fontSize: "9px", marginLeft: "1px" }}>✕</span>
+                  </div>
+                ))}
+              </div>
+              <div style={{ display: "flex", gap: "6px" }}>
+                <input value={newName} onChange={e => setNewName(e.target.value)} onKeyDown={e => e.key === "Enter" && addParticipant()} placeholder="Add bidder..." style={{ ...inp, flex: 1 }} />
+                <button onClick={addParticipant} style={{ padding: "6px 14px", background: "#d4af37", border: "none", borderRadius: "4px", color: "#0a3d0c", fontSize: "11px", fontWeight: "bold", cursor: "pointer", letterSpacing: "1px" }}>ADD</button>
+              </div>
+            </div>
+          )}
+
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", background: "rgba(0,0,0,0.15)", borderRadius: "6px", padding: "10px 14px", marginBottom: "16px", fontSize: "12px", color: "#8fbc8f" }}>
+            <span>{Object.keys(owners).length}/50 sold{totalPot > 0 && ` · $${totalPot.toLocaleString()}`}</span>
+            {isAdmin && (
+              <button onClick={handleShuffle} style={{
+                padding: "5px 12px", background: shuffled ? "transparent" : "rgba(212,175,55,0.2)",
+                border: `1px solid ${shuffled ? "#1a5e1f" : "#d4af37"}`,
+                borderRadius: "4px", color: shuffled ? "#8fbc8f" : "#d4af37",
+                fontSize: "10px", cursor: "pointer", letterSpacing: "1px", fontFamily: "inherit",
+              }}>🎲 {shuffled ? "RESHUFFLE" : "SHUFFLE ORDER"}</button>
+            )}
+          </div>
+
+          {!isAdmin && (
+            <div style={{ display: "flex", flexWrap: "wrap", gap: "6px", marginBottom: "14px" }}>
+              {participants.map(p => (
+                <div key={p} style={{ display: "flex", alignItems: "center", gap: "3px", fontSize: "10px", color: "#8fbc8f" }}>
+                  <span style={{ width: "6px", height: "6px", borderRadius: "50%", background: participantColors[p], display: "inline-block" }} />{p}
+                </div>
+              ))}
+            </div>
+          )}
+
+          {[1,2,3,4,5].map(tier => (
+            <div key={tier} style={{ marginBottom: "20px" }}>
+              <div style={{ fontSize: "10px", letterSpacing: "3px", textTransform: "uppercase", color: "#d4af37", marginBottom: "6px", paddingBottom: "4px", borderBottom: "1px solid #1a5e1f33" }}>{TIER_NAMES[tier]}</div>
+              {tieredGolfers[tier].map((g, idx) => {
+                const owned = owners[g.name];
+                const isEd = editingGolfer === g.name;
+                return (
+                  <div key={g.name} style={{
+                    display: "flex", alignItems: "center", justifyContent: "space-between",
+                    padding: "7px 10px", marginBottom: "1px", borderRadius: "5px",
+                    background: owned ? `${participantColors[owned.owner] || "#555"}22` : "rgba(0,0,0,0.06)",
+                    border: owned ? `1px solid ${participantColors[owned.owner] || "#555"}44` : "1px solid transparent",
+                  }}>
+                    <div style={{ flex: 1, minWidth: 0, overflow: "hidden" }}>
+                      <span style={{ fontSize: "10px", color: "#555", marginRight: "5px" }}>#{idx+1}</span>
+                      <span style={{ fontSize: "13px" }}>{g.name}</span>
+                      <span style={{ fontSize: "10px", color: "#8fbc8f", marginLeft: "6px" }}>{g.odds}</span>
+                    </div>
+                    {isAdmin && isEd ? (
+                      <div style={{ display: "flex", gap: "3px", alignItems: "center", flexShrink: 0 }}>
+                        <select value={selectedOwner} onChange={e => setSelectedOwner(e.target.value)} style={{ ...inp, padding: "4px 5px", fontSize: "11px", maxWidth: "90px" }}>
+                          <option value="">Who?</option>
+                          {participants.map(p => <option key={p} value={p}>{p}</option>)}
+                        </select>
+                        <div style={{ position: "relative" }}>
+                          <span style={{ position: "absolute", left: "6px", top: "50%", transform: "translateY(-50%)", color: "#8fbc8f", fontSize: "11px", pointerEvents: "none" }}>$</span>
+                          <input type="number" value={bidAmount} onChange={e => setBidAmount(e.target.value)} placeholder="0"
+                            style={{ ...inp, width: "55px", paddingLeft: "16px", fontSize: "11px" }} />
+                        </div>
+                        <button onClick={() => assignGolfer(g.name)} style={{ padding: "4px 7px", background: "#d4af37", border: "none", borderRadius: "3px", color: "#0a3d0c", fontSize: "10px", fontWeight: "bold", cursor: "pointer" }}>✓</button>
+                        <button onClick={() => { setEditingGolfer(null); setSelectedOwner(""); setBidAmount(""); }}
+                          style={{ padding: "4px 5px", background: "transparent", border: "1px solid #444", borderRadius: "3px", color: "#8fbc8f", fontSize: "9px", cursor: "pointer" }}>✕</button>
+                      </div>
+                    ) : owned ? (
+                      <div style={{ display: "flex", alignItems: "center", gap: "5px", flexShrink: 0 }}>
+                        <span style={{ background: participantColors[owned.owner] + "44", border: `1px solid ${participantColors[owned.owner]}88`, borderRadius: "10px", padding: "2px 8px", fontSize: "11px" }}>{owned.owner} · ${owned.bid}</span>
+                        {isAdmin && <span onClick={() => { setEditingGolfer(g.name); setSelectedOwner(owned.owner); setBidAmount(String(owned.bid)); }} style={{ cursor: "pointer", color: "#8fbc8f", fontSize: "10px" }}>✎</span>}
+                        {isAdmin && <span onClick={() => removeOwner(g.name)} style={{ cursor: "pointer", color: "#666", fontSize: "10px" }}>✕</span>}
+                      </div>
+                    ) : isAdmin ? (
+                      <button onClick={() => setEditingGolfer(g.name)} style={{ padding: "3px 9px", background: "transparent", border: "1px solid #1a5e1f", borderRadius: "3px", color: "#8fbc8f", fontSize: "10px", cursor: "pointer", letterSpacing: "1px" }}>ASSIGN</button>
+                    ) : <span style={{ fontSize: "10px", color: "#444" }}>—</span>}
+                  </div>
+                );
+              })}
+            </div>
+          ))}
+        </>)}
+
+        {/* ========== OWNERS ========== */}
+        {view === "owners" && (<>
+          {[...participants].sort((a,b) => (ownerStats[b]?.spent||0) - (ownerStats[a]?.spent||0)).map(p => {
+            const s = ownerStats[p] || { spent: 0, golfers: [] };
+            const earn = participantEarnings[p] || 0;
+            return (
+              <div key={p} style={{ background: "rgba(0,0,0,0.2)", borderRadius: "8px", padding: "12px 14px", marginBottom: "8px", borderLeft: `3px solid ${participantColors[p]}` }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "4px" }}>
+                  <span style={{ fontSize: "15px", fontWeight: "bold" }}>{p}</span>
+                  <div style={{ textAlign: "right" }}>
+                    <span style={{ fontSize: "12px", color: "#d4af37" }}>${s.spent.toLocaleString()} in</span>
+                    {earn > 0 && <span style={{ fontSize: "12px", color: "#52B788", marginLeft: "8px" }}>+${earn % 1 === 0 ? earn.toLocaleString() : earn.toFixed(2)} out</span>}
+                  </div>
+                </div>
+                {s.golfers.length > 0 ? (
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: "4px" }}>
+                    {s.golfers.sort((a,b) => b.bid - a.bid).map(g => {
+                      const t = tournament[g.name];
+                      const posLabel = t ? (t.position === "MC" ? "MC" : t.position) : null;
+                      return (
+                        <span key={g.name} style={{ fontSize: "10px", background: "rgba(0,0,0,0.2)", padding: "2px 7px", borderRadius: "8px", color: "#8fbc8f" }}>
+                          {g.name} <span style={{ color: "#d4af37" }}>${g.bid}</span>
+                          {posLabel && <span style={{ color: t.position === "MC" ? "#E76F51" : "#52B788", marginLeft: "3px" }}>{posLabel}</span>}
+                        </span>
+                      );
+                    })}
+                  </div>
+                ) : <span style={{ fontSize: "11px", color: "#555" }}>No golfers yet</span>}
+              </div>
+            );
+          })}
+          {totalPot > 0 && (
+            <div style={{ textAlign: "center", marginTop: "16px", padding: "12px", background: "rgba(212,175,55,0.1)", borderRadius: "8px", border: "1px solid #d4af3733" }}>
+              <div style={{ fontSize: "10px", letterSpacing: "2px", color: "#8fbc8f", marginBottom: "4px" }}>TOTAL POT</div>
+              <div style={{ fontSize: "28px", color: "#d4af37", fontWeight: "bold" }}>${totalPot.toLocaleString()}</div>
+            </div>
+          )}
+        </>)}
+
+        {/* ========== LEADERBOARD ========== */}
+        {view === "leaderboard" && (<>
+          {isAdmin && (
+            <div style={{ background: "rgba(0,0,0,0.2)", borderRadius: "8px", padding: "14px", marginBottom: "16px", border: "1px solid #1a5e1f" }}>
+              <div style={{ fontSize: "10px", letterSpacing: "3px", textTransform: "uppercase", color: "#d4af37", marginBottom: "10px" }}>Update Scores</div>
+              <div style={{ display: "flex", gap: "4px", flexWrap: "wrap" }}>
+                <select value={editingScore || ""} onChange={e => { setEditingScore(e.target.value); setScorePos(""); setScoreVal(""); setScoreThru(""); }}
+                  style={{ ...inp, flex: "1 1 120px", fontSize: "12px" }}>
+                  <option value="">Select golfer...</option>
+                  {DEFAULT_GOLFERS.map(g => <option key={g.name} value={g.name}>{g.name}</option>)}
+                </select>
+                <input value={scorePos} onChange={e => setScorePos(e.target.value)} placeholder="Pos/MC" style={{ ...inp, width: "60px", fontSize: "12px" }} />
+                <input value={scoreVal} onChange={e => setScoreVal(e.target.value)} placeholder="Score" style={{ ...inp, width: "55px", fontSize: "12px" }} />
+                <input value={scoreThru} onChange={e => setScoreThru(e.target.value)} placeholder="Thru" style={{ ...inp, width: "45px", fontSize: "12px" }} />
+                <button onClick={() => editingScore && saveScore(editingScore)} style={{ padding: "5px 10px", background: "#d4af37", border: "none", borderRadius: "3px", color: "#0a3d0c", fontSize: "11px", fontWeight: "bold", cursor: "pointer" }}>Save</button>
+              </div>
+            </div>
+          )}
+
+          {leaderboard.length === 0 ? (
+            <div style={{ textAlign: "center", padding: "40px 20px", color: "#555" }}>
+              <div style={{ fontSize: "24px", marginBottom: "8px" }}>⛳</div>
+              <div style={{ fontSize: "13px" }}>{isAdmin ? "Add scores above to get started." : "Check back once the tournament begins Thursday."}</div>
+            </div>
+          ) : (
+            leaderboard.map((entry, i) => {
+              const isMC = entry.position === "MC";
+              const payout = !isMC && entry.position <= 10 ? PAYOUTS[entry.position - 1] : null;
+              const payoutAmt = payout && totalPot > 0 ? (totalPot * payout.pct / 100) : null;
+              const inCut = !isMC && entry.position > 10;
+              const oc = participantColors[entry.owner] || "#555";
+              return (
+                <div key={entry.name} style={{
+                  display: "flex", alignItems: "center", justifyContent: "space-between",
+                  padding: "7px 10px", marginBottom: "1px", borderRadius: "5px",
+                  background: isMC ? "rgba(231,111,81,0.06)" : entry.position <= 3 ? "rgba(212,175,55,0.1)" : "rgba(0,0,0,0.06)",
+                  borderLeft: `3px solid ${isMC ? "#E76F5155" : entry.position <= 3 ? "#d4af37" : entry.position <= 10 ? "#52B78866" : "#1a5e1f33"}`,
+                }}>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <span style={{ fontSize: "13px", fontWeight: "bold", color: isMC ? "#E76F51" : "#d4af37", marginRight: "8px", display: "inline-block", minWidth: "28px" }}>
+                      {isMC ? "MC" : entry.position}
+                    </span>
+                    <span style={{ fontSize: "13px" }}>{entry.name}</span>
+                    {entry.score && <span style={{ fontSize: "11px", color: "#8fbc8f", marginLeft: "6px" }}>{entry.score}</span>}
+                    {entry.thru && <span style={{ fontSize: "10px", color: "#666", marginLeft: "4px" }}>thru {entry.thru}</span>}
+                  </div>
+                  <div style={{ display: "flex", alignItems: "center", gap: "5px", flexShrink: 0 }}>
+                    {payoutAmt && <span style={{ fontSize: "10px", color: "#52B788", fontWeight: "bold" }}>${payoutAmt % 1 === 0 ? payoutAmt.toLocaleString() : payoutAmt.toFixed(2)}</span>}
+                    {inCut && <span style={{ fontSize: "9px", color: "#8fbc8f" }}>cut$</span>}
+                    <span style={{ background: oc + "44", border: `1px solid ${oc}88`, borderRadius: "10px", padding: "1px 7px", fontSize: "10px" }}>{entry.owner}</span>
+                    {isAdmin && <>
+                      <span onClick={() => { setEditingScore(entry.name); setScorePos(String(entry.position)); setScoreVal(entry.score||""); setScoreThru(entry.thru||""); window.scrollTo(0,0); }}
+                        style={{ cursor: "pointer", color: "#8fbc8f", fontSize: "10px" }}>✎</span>
+                      <span onClick={() => removeScore(entry.name)} style={{ cursor: "pointer", color: "#666", fontSize: "10px" }}>✕</span>
+                    </>}
+                  </div>
+                </div>
+              );
+            })
+          )}
+        </>)}
+
+        {/* ========== PAYOUTS ========== */}
+        {view === "payouts" && (
+          <div>
+            <div style={{ background: "rgba(0,0,0,0.2)", borderRadius: "8px", padding: "16px", border: "1px solid #1a5e1f", marginBottom: "16px" }}>
+              <div style={{ fontSize: "10px", letterSpacing: "3px", textTransform: "uppercase", color: "#d4af37", marginBottom: "12px" }}>
+                Payout Structure {totalPot > 0 && `· $${totalPot.toLocaleString()} pot`}
+              </div>
+              {PAYOUTS.map(p => {
+                const amt = totalPot > 0 ? (totalPot * p.pct / 100) : 0;
+                return (
+                  <div key={p.place} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 0", borderBottom: "1px solid #1a5e1f22" }}>
+                    <div>
+                      <span style={{ fontSize: "14px", color: p.place === "Made Cut" ? "#8fbc8f" : "#f5f0e1" }}>{p.place}</span>
+                      {p.note && <span style={{ fontSize: "11px", color: "#666", marginLeft: "6px" }}>({p.note})</span>}
+                    </div>
+                    <div>
+                      <span style={{ fontSize: "14px", color: "#d4af37", fontWeight: "bold" }}>{p.pct}%</span>
+                      {totalPot > 0 && <span style={{ fontSize: "12px", color: "#8fbc8f", marginLeft: "10px" }}>${amt % 1 === 0 ? amt.toLocaleString() : amt.toFixed(2)}</span>}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+            <div style={{ background: "rgba(0,0,0,0.2)", borderRadius: "8px", padding: "16px", border: "1px solid #1a5e1f", fontSize: "12px", color: "#8fbc8f", lineHeight: "1.8" }}>
+              <div style={{ fontSize: "10px", letterSpacing: "3px", textTransform: "uppercase", color: "#d4af37", marginBottom: "10px" }}>Rules</div>
+              <p style={{ margin: "0 0 6px" }}>True Calcutta: bid real dollars. No bankroll cap. Pot = sum of all bids.</p>
+              <p style={{ margin: "0 0 6px" }}>50 golfers auctioned individually across 5 tiers.</p>
+              <p style={{ margin: "0 0 6px" }}>Ascending bid format. $1 minimum opening, $1 minimum raise.</p>
+              <p style={{ margin: "0 0 6px" }}>Must own at least one golfer. Venmo commissioner before Thursday tee time.</p>
+              <p style={{ margin: "0 0 6px" }}>Missed cuts pay nothing. Made the cut (outside top 10) splits 14% evenly.</p>
+              <p style={{ margin: "0 0 6px" }}>If a golfer outside our pool finishes top 10, that payout rolls into the cut pool.</p>
+              <p style={{ margin: "0" }}>Ties split the combined payout of the tied positions.</p>
+            </div>
+          </div>
+        )}
+
+      </div>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+</script>
+</body>
+</html>
