@@ -13,11 +13,7 @@ body{font-family:'DM Sans',system-ui,-apple-system,sans-serif;background:#0b1a0e
 input,select,button{font-family:inherit;}
 input:focus,select:focus{outline:none;border-color:#c9a84c !important;}
 ::placeholder{color:#4a6b4e;}
-::-webkit-scrollbar{width:5px;}::-webkit-scrollbar-track{background:transparent;}::-webkit-scrollbar-thumb{background:#1e3d22;border-radius:3px;}
-button{-webkit-tap-highlight-color:transparent;}
-@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
-@keyframes pulse{0%,100%{opacity:1}50%{opacity:.6}}
-.fade-in{animation:fadeIn .3s ease}
+button{-webkit-tap-highlight-color:transparent;cursor:pointer;}
 </style>
 </head>
 <body>
@@ -28,464 +24,307 @@ button{-webkit-tap-highlight-color:transparent;}
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
 <script>
-const firebaseConfig = {
-  apiKey: "AIzaSyAHIXVzdNTjiApVE-2gFLjIA66kUdtnNww",
-  authDomain: "masters-calcutta26.firebaseapp.com",
-  databaseURL: "https://masters-calcutta26-default-rtdb.firebaseio.com",
-  projectId: "masters-calcutta26",
-  storageBucket: "masters-calcutta26.firebasestorage.app",
-  messagingSenderId: "390751719970",
-  appId: "1:390751719970:web:d129cc7a3e836ad9db707b"
-};
-let db=null;
-try{firebase.initializeApp(firebaseConfig);db=firebase.database();}catch(e){console.warn("Firebase not configured");}
+const firebaseConfig={apiKey:"AIzaSyAHIXVzdNTjiApVE-2gFLjIA66kUdtnNww",authDomain:"masters-calcutta26.firebaseapp.com",databaseURL:"https://masters-calcutta26-default-rtdb.firebaseio.com",projectId:"masters-calcutta26",storageBucket:"masters-calcutta26.firebasestorage.app",messagingSenderId:"390751719970",appId:"1:390751719970:web:d129cc7a3e836ad9db707b"};
+let db=null;try{firebase.initializeApp(firebaseConfig);db=firebase.database();}catch(e){}
 </script>
 <script type="text/babel">
-const{useState,useEffect,useMemo,useCallback,useRef}=React;
-
-// === 30 GOLFERS ===
-const GOLFERS=[
-  {name:"Scottie Scheffler",odds:"+410",tier:1},
-  {name:"Jon Rahm",odds:"+850",tier:1},
-  {name:"Rory McIlroy",odds:"+1025",tier:1},
-  {name:"Bryson DeChambeau",odds:"+1100",tier:1},
-  {name:"Ludvig Åberg",odds:"+1750",tier:1},
-  {name:"Xander Schauffele",odds:"+1850",tier:1},
-  {name:"Cameron Young",odds:"+2400",tier:2},
-  {name:"Tommy Fleetwood",odds:"+2500",tier:2},
-  {name:"Matt Fitzpatrick",odds:"+2600",tier:2},
-  {name:"Collin Morikawa",odds:"+3100",tier:2},
-  {name:"Justin Rose",odds:"+3600",tier:2},
-  {name:"Jordan Spieth",odds:"+3800",tier:2},
-  {name:"Brooks Koepka",odds:"+3800",tier:3},
-  {name:"Hideki Matsuyama",odds:"+3900",tier:3},
-  {name:"Robert MacIntyre",odds:"+4000",tier:3},
-  {name:"Russell Henley",odds:"+4200",tier:3},
-  {name:"Chris Gotterup",odds:"+4300",tier:3},
-  {name:"Patrick Reed",odds:"+4500",tier:3},
-  {name:"Viktor Hovland",odds:"+4600",tier:4},
-  {name:"Si Woo Kim",odds:"+4700",tier:4},
-  {name:"Min Woo Lee",odds:"+5400",tier:4},
-  {name:"Justin Thomas",odds:"+5500",tier:4},
-  {name:"Patrick Cantlay",odds:"+5700",tier:4},
-  {name:"Adam Scott",odds:"+6200",tier:4},
-  {name:"Akshay Bhatia",odds:"+6600",tier:5},
-  {name:"Sepp Straka",odds:"+6700",tier:5},
-  {name:"Jason Day",odds:"+6900",tier:5},
-  {name:"Jake Knapp",odds:"+6900",tier:5},
-  {name:"Tyrrell Hatton",odds:"+6900",tier:5},
-  {name:"Shane Lowry",odds:"+7000",tier:5},
-  {name:"Sam Burns",odds:"+7200",tier:5},
-  {name:"Corey Conners",odds:"+8200",tier:5},
-  {name:"Nicolai Højgaard",odds:"+8400",tier:5},
-  {name:"Kurt Kitayama",odds:"+8800",tier:5},
-  {name:"J.J. Spaun",odds:"+8800",tier:5},
-  {name:"Jacob Bridgeman",odds:"+9400",tier:5},
-  {name:"Maverick McNealy",odds:"+9800",tier:5},
-  {name:"Cameron Smith",odds:"+10000",tier:5},
-  {name:"Harris English",odds:"+10500",tier:5},
-  {name:"Gary Woodland",odds:"+11000",tier:5},
-];
-const TN={1:"Tier 1 · Favorites",2:"Tier 2 · Contenders",3:"Tier 3 · Sleepers",4:"Tier 4 · Dark Horses",5:"Tier 5 · Longshots"};
-
-// === STEEPER PAYOUTS ===
-const PAYOUTS=[
-  {place:"1st",pct:35},{place:"2nd",pct:20},{place:"3rd",pct:12},
-  {place:"4th",pct:8},{place:"5th",pct:5},
-  {place:"Top 10",pct:10,note:"split among 6th-10th"},
-  {place:"Made Cut",pct:10,note:"split among rest"},
-];
-
-const PIN="1986";
-const DPARTS=["Kyle","Arocho","Logan","Trevor","Monty","Bo","Pelayo","Walker","Hunter","Kasper","Cole","Firas"];
-const COLORS=["#3d9b6e","#5bb88a","#2a7d5a","#7ecba4","#c9a84c","#a8c686","#e2c36b","#2d6872","#d47d5e","#e8a85c","#8596aa","#4a7fa3"];
-
-// === HARDCODED AUCTION RESULTS (first 30 golfers) ===
-const LOCKED_ORDER=["Matt Fitzpatrick","Brooks Koepka","Hideki Matsuyama","Ludvig Åberg","Si Woo Kim","Rory McIlroy","Tommy Fleetwood","Justin Rose","Akshay Bhatia","Jason Day","Collin Morikawa","Robert MacIntyre","Scottie Scheffler","Bryson DeChambeau","Viktor Hovland","Patrick Reed","Patrick Cantlay","Xander Schauffele","Sepp Straka","Shane Lowry","Jake Knapp","Russell Henley","Min Woo Lee","Adam Scott","Cameron Young","Jon Rahm","Tyrrell Hatton","Justin Thomas","Jordan Spieth","Chris Gotterup","Sam Burns","Corey Conners","Nicolai Højgaard","Kurt Kitayama","J.J. Spaun","Jacob Bridgeman","Maverick McNealy","Cameron Smith","Harris English","Gary Woodland"];
-
-const LOCKED_OWNERS={
-  "Matt Fitzpatrick":{owner:"Arocho",bid:40},
-  "Brooks Koepka":{owner:"Arocho",bid:30},
-  "Hideki Matsuyama":{owner:"Logan",bid:17},
-  "Ludvig Åberg":{owner:"Trevor",bid:55},
-  "Si Woo Kim":{owner:"Monty",bid:30},
-  "Rory McIlroy":{owner:"Trevor",bid:70},
-  "Tommy Fleetwood":{owner:"Bo",bid:47},
-  "Justin Rose":{owner:"Pelayo",bid:54},
-  "Akshay Bhatia":{owner:"Monty",bid:35},
-  "Jason Day":{owner:"Walker",bid:21},
-  "Collin Morikawa":{owner:"Walker",bid:40},
-  "Robert MacIntyre":{owner:"Hunter",bid:46},
-  "Scottie Scheffler":{owner:"Hunter",bid:162},
-  "Bryson DeChambeau":{owner:"Pelayo",bid:152},
-  "Viktor Hovland":{owner:"Kasper",bid:72},
-  "Patrick Reed":{owner:"Pelayo",bid:60},
-  "Patrick Cantlay":{owner:"Hunter",bid:47},
-  "Xander Schauffele":{owner:"Pelayo",bid:135},
-  "Sepp Straka":{owner:"Trevor",bid:35},
-  "Shane Lowry":{owner:"Cole",bid:40},
-  "Jake Knapp":{owner:"Trevor",bid:40},
-  "Russell Henley":{owner:"Arocho",bid:70},
-  "Min Woo Lee":{owner:"Kyle",bid:51},
-  "Adam Scott":{owner:"Trevor",bid:65},
-  "Cameron Young":{owner:"Walker",bid:140},
-  "Jon Rahm":{owner:"Firas",bid:244},
-  "Tyrrell Hatton":{owner:"Kyle",bid:45},
-  "Justin Thomas":{owner:"Monty",bid:69},
-  "Jordan Spieth":{owner:"Logan",bid:86},
-  "Chris Gotterup":{owner:"Kyle",bid:80},
-};
-
-function shuf(a){const b=[...a];for(let i=b.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[b[i],b[j]]=[b[j],b[i]];}return b;}
+const{useState,useEffect,useMemo}=React;
 function fb(p,v){if(db)db.ref(p).set(v);}
 function fbOn(p,cb){if(db){db.ref(p).on("value",s=>cb(s.val()));return()=>db.ref(p).off("value");}return()=>{};}
 function fmt$(n){if(!n&&n!==0)return"$0";return n%1===0?"$"+n.toLocaleString():"$"+n.toFixed(2);}
 
+const PIN="1986";
+const POT=2314;
+
+const OWNERS={
+  "Matt Fitzpatrick":{owner:"Arocho",bid:40},"Brooks Koepka":{owner:"Arocho",bid:30},"Hideki Matsuyama":{owner:"Logan",bid:17},"Ludvig Åberg":{owner:"Trevor",bid:55},"Si Woo Kim":{owner:"Monty",bid:30},"Rory McIlroy":{owner:"Trevor",bid:70},"Tommy Fleetwood":{owner:"Bo",bid:47},"Justin Rose":{owner:"Pelayo",bid:54},"Akshay Bhatia":{owner:"Monty",bid:35},"Jason Day":{owner:"Walker",bid:21},"Collin Morikawa":{owner:"Walker",bid:40},"Robert MacIntyre":{owner:"Hunter",bid:46},"Scottie Scheffler":{owner:"Hunter",bid:162},"Bryson DeChambeau":{owner:"Pelayo",bid:152},"Viktor Hovland":{owner:"Kasper",bid:72},"Patrick Reed":{owner:"Pelayo",bid:60},"Patrick Cantlay":{owner:"Hunter",bid:47},"Xander Schauffele":{owner:"Pelayo",bid:135},"Sepp Straka":{owner:"Trevor",bid:35},"Shane Lowry":{owner:"Cole",bid:40},"Jake Knapp":{owner:"Trevor",bid:40},"Russell Henley":{owner:"Arocho",bid:70},"Min Woo Lee":{owner:"Kyle",bid:51},"Adam Scott":{owner:"Trevor",bid:65},"Cameron Young":{owner:"Walker",bid:140},"Jon Rahm":{owner:"Firas",bid:244},"Tyrrell Hatton":{owner:"Kyle",bid:45},"Justin Thomas":{owner:"Monty",bid:69},"Jordan Spieth":{owner:"Logan",bid:86},"Chris Gotterup":{owner:"Kyle",bid:80},"J.J. Spaun":{owner:"Trevor",bid:30},"Jacob Bridgeman":{owner:"Logan",bid:35},"Maverick McNealy":{owner:"Kyle",bid:20},"Cameron Smith":{owner:"Pelayo",bid:21},"Harris English":{owner:"Monty",bid:15},"Gary Woodland":{owner:"Monty",bid:16},"Sam Burns":{owner:"Monty",bid:25},"Corey Conners":{owner:"Kyle",bid:30},"Nicolai Højgaard":{owner:"Logan",bid:36},"Kurt Kitayama":{owner:"Kyle",bid:8}
+};
+
+const RESULTS=[
+  {name:"Rory McIlroy",pos:1,score:"-12",r4:"-1"},
+  {name:"Scottie Scheffler",pos:2,score:"-11",r4:"-4"},
+  {name:"Russell Henley",pos:3,score:"-10",r4:"-4",tie:"T3"},
+  {name:"Cameron Young",pos:3,score:"-10",r4:"+1",tie:"T3"},
+  {name:"Tyrrell Hatton",pos:3,score:"-10",r4:"-6",tie:"T3"},
+  {name:"Justin Rose",pos:3,score:"-10",r4:"-2",tie:"T3"},
+  {name:"Sam Burns",pos:7,score:"-9",r4:"+1",tie:"T7"},
+  {name:"Collin Morikawa",pos:7,score:"-9",r4:"-4",tie:"T7"},
+  {name:"Xander Schauffele",pos:9,score:"-8",r4:"-4",tie:"T9"},
+  {name:"Jake Knapp",pos:11,score:"-7",r4:"-2"},
+  {name:"Jason Day",pos:12,score:"-5",r4:"+3",tie:"T12"},
+  {name:"Patrick Reed",pos:12,score:"-5",r4:"+1",tie:"T12"},
+  {name:"Hideki Matsuyama",pos:12,score:"-5",r4:"-3",tie:"T12"},
+  {name:"Patrick Cantlay",pos:12,score:"-5",r4:"+1",tie:"T12"},
+  {name:"Jordan Spieth",pos:12,score:"-5",r4:"-4",tie:"T12"},
+  {name:"Brooks Koepka",pos:12,score:"-5",r4:"-1",tie:"T12"},
+  {name:"Matt Fitzpatrick",pos:18,score:"-4",r4:"-1",tie:"T18"},
+  {name:"Viktor Hovland",pos:18,score:"-4",r4:"-5",tie:"T18"},
+  {name:"Maverick McNealy",pos:18,score:"-4",r4:"-5",tie:"T18"},
+  {name:"Ludvig Åberg",pos:21,score:"-3",r4:"E",tie:"T21"},
+  {name:"Adam Scott",pos:24,score:"-2",r4:"-2",tie:"T24"},
+  {name:"Chris Gotterup",pos:24,score:"-2",r4:"+1",tie:"T24"},
+  {name:"Shane Lowry",pos:30,score:"-1",r4:"+8",tie:"T30"},
+  {name:"Harris English",pos:30,score:"-1",r4:"E",tie:"T30"},
+  {name:"Tommy Fleetwood",pos:33,score:"E",r4:"+4",tie:"T33"},
+  {name:"Gary Woodland",pos:33,score:"E",r4:"-6",tie:"T33"},
+  {name:"Jon Rahm",pos:38,score:"+1",r4:"-4",tie:"T38"},
+  {name:"Jacob Bridgeman",pos:41,score:"+2",r4:"+4",tie:"T41"},
+  {name:"Sepp Straka",pos:41,score:"+2",r4:"+4",tie:"T41"},
+  {name:"Justin Thomas",pos:41,score:"+2",r4:"+1",tie:"T41"},
+  {name:"Si Woo Kim",pos:47,score:"+4",r4:"E"},
+  {name:"Corey Conners",pos:49,score:"+6",r4:"+3",tie:"T49"},
+  {name:"Kurt Kitayama",pos:51,score:"+7",r4:"E"},
+  // Missed cuts
+  {name:"J.J. Spaun",pos:"MC",score:"+5"},
+  {name:"Akshay Bhatia",pos:"MC",score:"+6"},
+  {name:"Bryson DeChambeau",pos:"MC",score:"+6"},
+  {name:"Nicolai Højgaard",pos:"MC",score:"+6"},
+  {name:"Cameron Smith",pos:"MC",score:"+7"},
+  {name:"Robert MacIntyre",pos:"MC",score:"+7"},
+  {name:"Min Woo Lee",pos:"MC",score:"+11"},
+];
+
+// Payout calculation
+// 1st:35%, 2nd:20%, T3(4-way, spans 3-4-5-6):27%/4=6.75% each, T7(2-way, spans 7-8):2% each, T9: Schauffele gets 2%, Homa(not in pool) 2% rolls to cut
+// Cut pool: 10% + 2% rollover = 12%, split among 24 pool golfers outside top 10 who made cut
+const PAYOUTS_CALC={
+  "Rory McIlroy":POT*0.35,
+  "Scottie Scheffler":POT*0.20,
+  "Russell Henley":POT*0.0675,"Cameron Young":POT*0.0675,"Tyrrell Hatton":POT*0.0675,"Justin Rose":POT*0.0675,
+  "Sam Burns":POT*0.02,"Collin Morikawa":POT*0.02,
+  "Xander Schauffele":POT*0.02,
+};
+const CUT_POOL=POT*0.12;
+const CUT_GOLFERS=RESULTS.filter(r=>r.pos!=="MC"&&!PAYOUTS_CALC[r.name]).length;
+const CUT_SHARE=CUT_POOL/CUT_GOLFERS;
+
+function getPayout(name){
+  const r=RESULTS.find(x=>x.name===name);
+  if(!r||r.pos==="MC")return 0;
+  if(PAYOUTS_CALC[name])return PAYOUTS_CALC[name];
+  return CUT_SHARE;
+}
+
+const PARTS=["Kyle","Arocho","Logan","Trevor","Monty","Bo","Pelayo","Walker","Hunter","Kasper","Cole","Firas"];
+const COLORS=["#3d9b6e","#5bb88a","#2a7d5a","#7ecba4","#c9a84c","#a8c686","#e2c36b","#2d6872","#d47d5e","#e8a85c","#8596aa","#4a7fa3"];
+
 function App(){
-  const[ld,setLd]=useState(false);
   const[admin,setAdmin]=useState(false);
   const[showPin,setShowPin]=useState(false);
   const[pin,setPin]=useState("");
   const[pinErr,setPinErr]=useState(false);
-  const[view,setView]=useState("auction");
+  const[view,setView]=useState("leaderboard");
+  const[paid,setPaid]=useState({});
 
-  // Auction state
-  const[order,setOrder]=useState(LOCKED_ORDER);
-  const[shuffled,setShuffled]=useState(true);
-  const[owners,setOwners]=useState(LOCKED_OWNERS);
-  const[parts,setParts]=useState(DPARTS);
-  const[tourn,setTourn]=useState({});
+  useEffect(()=>{if(!db)return;const u=fbOn("v2/paid",v=>setPaid(v||{}));return u;},[]);
 
-  // Live auction mode
-  const[auctionActive,setAuctionActive]=useState(false);
-  const[currentIdx,setCurrentIdx]=useState(30);
+  const pc=useMemo(()=>{const m={};PARTS.forEach((p,i)=>m[p]=COLORS[i%COLORS.length]);return m;},[]);
 
-  // Form state
-  const[nn,setNn]=useState("");
-  const[so,setSo]=useState("");
-  const[ba,setBa]=useState("");
-  const[eg,setEg]=useState(null);
-  const[es,setEs]=useState(null);
-  const[sp,setSp]=useState("");
-  const[sv,setSv]=useState("");
-  const[sthru,setSthru]=useState("");
-
-  // Firebase sync
-  useEffect(()=>{
-    if(!db){setLd(true);return;}
-    const u=[
-      fbOn("v2/order",v=>{if(v&&v.length>=40)setOrder(v);else setOrder(LOCKED_ORDER);}),
-      fbOn("v2/shuffled",v=>{if(v!==null)setShuffled(v);}),
-      fbOn("v2/owners",v=>setOwners({...LOCKED_OWNERS,...(v||{})})),
-      fbOn("v2/participants",v=>{if(v)setParts(v);}),
-      fbOn("v2/tournament",v=>setTourn(v||{})),
-      fbOn("v2/auctionActive",v=>{if(v!==null)setAuctionActive(v);}),
-      fbOn("v2/currentIdx",v=>{if(v!==null)setCurrentIdx(v);}),
-    ];
-    setLd(true);
-    return()=>u.forEach(x=>x());
+  const ownerData=useMemo(()=>{
+    const d={};
+    PARTS.forEach(p=>{d[p]={spent:0,golfers:[],payout:0};});
+    Object.entries(OWNERS).forEach(([g,{owner,bid}])=>{
+      if(!d[owner])return;
+      d[owner].spent+=bid;
+      const po=getPayout(g);
+      d[owner].payout+=po;
+      const r=RESULTS.find(x=>x.name===g);
+      d[owner].golfers.push({name:g,bid,payout:po,pos:r?r.pos:null,score:r?r.score:null});
+    });
+    return d;
   },[]);
 
-  const gm=useMemo(()=>{const m={};GOLFERS.forEach(g=>m[g.name]=g);return m;},[]);
-  const pc=useMemo(()=>{const m={};parts.forEach((p,i)=>m[p]=COLORS[i%COLORS.length]);return m;},[parts]);
-  const pot=useMemo(()=>Object.values(owners).reduce((s,o)=>s+(o.bid||0),0),[owners]);
-
-  const os=useMemo(()=>{
-    const s={};parts.forEach(p=>s[p]={spent:0,golfers:[],earning:0});
-    Object.entries(owners).forEach(([g,{owner,bid}])=>{
-      if(s[owner]){s[owner].spent+=bid;s[owner].golfers.push({name:g,bid});}
-    });
-    return s;
-  },[owners,parts]);
-
-  const tg=useMemo(()=>{
-    const t={1:[],2:[],3:[],4:[],5:[]};
-    order.forEach(n=>{const g=gm[n];if(g)t[g.tier].push(g);});
-    return t;
-  },[order,gm]);
-
-  const lb=useMemo(()=>{
-    const e=Object.entries(tourn).filter(([n])=>gm[n]).map(([n,d])=>({name:n,owner:owners[n]?.owner||"—",bid:owners[n]?.bid||0,...d}));
-    return[...e.filter(x=>x.position!=="MC").sort((a,b)=>(a.position||999)-(b.position||999)),...e.filter(x=>x.position==="MC").sort((a,b)=>a.name.localeCompare(b.name))];
-  },[tourn,owners,gm]);
-
-  // Current golfer in live auction
-  const currentGolfer=useMemo(()=>{
-    if(currentIdx>=order.length)return null;
-    return gm[order[currentIdx]]||null;
-  },[currentIdx,order,gm]);
-
-  const soldCount=Object.keys(owners).length;
-
-  // Actions
-  const doShuffle=()=>{
-    const locked=LOCKED_ORDER.slice(0,30);
-    const remaining=LOCKED_ORDER.slice(30);
-    const no=[...locked,...shuf(remaining)];
-    setOrder(no);setShuffled(true);setCurrentIdx(30);
-    fb("v2/order",no);fb("v2/shuffled",true);fb("v2/currentIdx",30);
-  };
-  const startAuction=()=>{setAuctionActive(true);setCurrentIdx(30);fb("v2/auctionActive",true);fb("v2/currentIdx",30);};
-  const assign=(name)=>{
-    if(!so||!ba)return;
-    const n={...owners,[name]:{owner:so,bid:parseFloat(ba)}};
-    setOwners(n);fb("v2/owners",n);setSo("");setBa("");
-  };
-  const soldAndNext=()=>{
-    if(!so||!ba||!currentGolfer)return;
-    assign(currentGolfer.name);
-    const next=currentIdx+1;
-    setCurrentIdx(next);fb("v2/currentIdx",next);
-  };
-  const skipGolfer=()=>{const next=currentIdx+1;setCurrentIdx(next);fb("v2/currentIdx",next);};
-  const isLocked=(g)=>!!LOCKED_OWNERS[g];
-  const unassign=(g)=>{if(isLocked(g))return;const n={...owners};delete n[g];setOwners(n);fb("v2/owners",n);};
-  const addP=()=>{const t=nn.trim();if(t&&!parts.includes(t)){const np=[...parts,t];setParts(np);fb("v2/participants",np);setNn("");}};
-  const remP=(name)=>{const np=parts.filter(x=>x!==name);setParts(np);fb("v2/participants",np);const no={...owners};Object.keys(no).forEach(k=>{if(no[k].owner===name)delete no[k];});setOwners(no);fb("v2/owners",no);};
-  const saveSc=(g)=>{const pos=sp.toUpperCase()==="MC"?"MC":parseInt(sp)||null;if(!pos)return;const nt={...tourn,[g]:{position:pos,score:sv,thru:sthru}};setTourn(nt);fb("v2/tournament",nt);setEs(null);setSp("");setSv("");setSthru("");};
-  const remSc=(n)=>{const nt={...tourn};delete nt[n];setTourn(nt);fb("v2/tournament",nt);};
+  const togglePaid=(name)=>{const np={...paid,[name]:!paid[name]};setPaid(np);fb("v2/paid",np);};
   const tryPin=()=>{if(pin===PIN){setAdmin(true);setShowPin(false);setPin("");setPinErr(false);}else setPinErr(true);};
-  const endAuction=()=>{setAuctionActive(false);fb("v2/auctionActive",false);};
-
-  const I={padding:"8px 12px",background:"rgba(0,0,0,0.3)",border:"1px solid #1e3d22",borderRadius:"8px",color:"#e8e4da",fontSize:"14px",fontFamily:"inherit",outline:"none"};
-  const Is={...I,padding:"6px 10px",fontSize:"13px",borderRadius:"6px"};
-
-  if(!ld)return <div style={{background:"#0b1a0e",color:"#7a9b7e",minHeight:"100vh",display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"'DM Sans',sans-serif"}}>Loading...</div>;
 
   return(
   <div>
-    {/* PIN */}
-    {showPin&&<div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.8)",zIndex:100,display:"flex",alignItems:"center",justifyContent:"center",backdropFilter:"blur(4px)"}} onClick={()=>{setShowPin(false);setPin("");setPinErr(false);}}>
+    {showPin&&<div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.8)",zIndex:100,display:"flex",alignItems:"center",justifyContent:"center"}} onClick={()=>{setShowPin(false);setPin("");setPinErr(false);}}>
       <div onClick={e=>e.stopPropagation()} style={{background:"#0f2413",border:"1px solid #1e3d22",borderRadius:"16px",padding:"32px 28px",width:"300px",textAlign:"center"}}>
         <div style={{fontSize:"11px",letterSpacing:"3px",color:"#c9a84c",marginBottom:"20px",textTransform:"uppercase",fontWeight:"600"}}>Commissioner Access</div>
-        <input type="password" maxLength={4} value={pin} onChange={e=>{setPin(e.target.value);setPinErr(false);}} onKeyDown={e=>e.key==="Enter"&&tryPin()} placeholder="PIN" autoFocus style={{...I,width:"140px",textAlign:"center",fontSize:"22px",letterSpacing:"10px",display:"block",margin:"0 auto 16px",borderColor:pinErr?"#d47d5e":"#1e3d22"}}/>
+        <input type="password" maxLength={4} value={pin} onChange={e=>{setPin(e.target.value);setPinErr(false);}} onKeyDown={e=>e.key==="Enter"&&tryPin()} placeholder="PIN" autoFocus style={{padding:"8px 12px",background:"rgba(0,0,0,0.3)",border:`1px solid ${pinErr?"#d47d5e":"#1e3d22"}`,borderRadius:"8px",color:"#e8e4da",fontSize:"22px",letterSpacing:"10px",width:"140px",textAlign:"center",display:"block",margin:"0 auto 16px",outline:"none"}}/>
         {pinErr&&<div style={{fontSize:"13px",color:"#d47d5e",marginBottom:"10px"}}>Wrong PIN</div>}
-        <button onClick={tryPin} style={{padding:"10px 32px",background:"#c9a84c",border:"none",borderRadius:"8px",color:"#0b1a0e",fontSize:"14px",fontWeight:"600",cursor:"pointer"}}>Unlock</button>
+        <button onClick={tryPin} style={{padding:"10px 32px",background:"#c9a84c",border:"none",borderRadius:"8px",color:"#0b1a0e",fontSize:"14px",fontWeight:"600"}}>Unlock</button>
       </div>
     </div>}
 
-    {/* HEADER */}
+    {/* Header */}
     <div style={{textAlign:"center",padding:"32px 20px 24px",background:"linear-gradient(180deg,#0f2413,#0b1a0e)",borderBottom:"1px solid #1e3d22"}}>
       <div style={{fontSize:"11px",letterSpacing:"5px",textTransform:"uppercase",color:"#c9a84c",marginBottom:"8px",fontWeight:"500"}}>A Tradition Unlike Any Other</div>
       <h1 style={{fontFamily:"'Playfair Display',Georgia,serif",fontSize:"34px",fontWeight:"500",color:"#fff",margin:"0 0 4px"}}>The Masters Calcutta</h1>
       <div style={{fontSize:"13px",color:"#7a9b7e",letterSpacing:"2px"}}>Augusta National · April 9–13, 2026</div>
       <div style={{marginTop:"14px",display:"flex",justifyContent:"center",gap:"10px",flexWrap:"wrap"}}>
-        {pot>0&&<span style={{borderRadius:"100px",padding:"6px 18px",fontSize:"14px",fontWeight:"700",background:"rgba(201,168,76,0.15)",border:"1px solid rgba(201,168,76,0.4)",color:"#c9a84c"}}>{fmt$(pot)} pot</span>}
-        {soldCount>0&&<span style={{borderRadius:"100px",padding:"6px 16px",fontSize:"13px",fontWeight:"500",background:"rgba(255,255,255,0.05)",border:"1px solid #1e3d22",color:"#7a9b7e"}}>{soldCount}/40 sold</span>}
-        <button onClick={()=>admin?setAdmin(false):setShowPin(true)} style={{borderRadius:"100px",padding:"6px 14px",fontSize:"13px",fontWeight:"500",background:admin?"rgba(201,168,76,0.15)":"rgba(255,255,255,0.05)",border:`1px solid ${admin?"rgba(201,168,76,0.4)":"#1e3d22"}`,color:admin?"#c9a84c":"#7a9b7e",cursor:"pointer"}}>{admin?"🔓 Admin":"🔒"}</button>
+        <span style={{borderRadius:"100px",padding:"6px 18px",fontSize:"14px",fontWeight:"700",background:"rgba(201,168,76,0.15)",border:"1px solid rgba(201,168,76,0.4)",color:"#c9a84c"}}>{fmt$(POT)} pot</span>
+        <span style={{borderRadius:"100px",padding:"6px 16px",fontSize:"13px",fontWeight:"500",background:"rgba(91,184,138,0.15)",border:"1px solid rgba(91,184,138,0.3)",color:"#5bb88a"}}>🏆 Rory McIlroy wins</span>
+        <button onClick={()=>admin?setAdmin(false):setShowPin(true)} style={{borderRadius:"100px",padding:"6px 14px",fontSize:"13px",fontWeight:"500",background:admin?"rgba(201,168,76,0.15)":"rgba(255,255,255,0.05)",border:`1px solid ${admin?"rgba(201,168,76,0.4)":"#1e3d22"}`,color:admin?"#c9a84c":"#7a9b7e"}}>{admin?"🔓 Admin":"🔒"}</button>
       </div>
     </div>
 
-    {/* NAV */}
-    <div style={{display:"flex",justifyContent:"center",borderBottom:"1px solid #1e3d22",background:"rgba(0,0,0,0.25)",position:"sticky",top:0,zIndex:50,backdropFilter:"blur(12px)",WebkitBackdropFilter:"blur(12px)"}}>
-      {[["auction","Auction"],["owners","Owners"],["leaderboard","Leaderboard"],["payouts","Payouts"]].map(([k,l])=>
-        <button key={k} onClick={()=>setView(k)} style={{padding:"14px 16px",background:"transparent",border:"none",borderBottom:view===k?"2px solid #c9a84c":"2px solid transparent",color:view===k?"#c9a84c":"#7a9b7e",fontSize:"13px",fontWeight:"500",cursor:"pointer"}}>{l}</button>
+    {/* Nav */}
+    <div style={{display:"flex",justifyContent:"center",borderBottom:"1px solid #1e3d22",background:"rgba(0,0,0,0.25)",position:"sticky",top:0,zIndex:50,backdropFilter:"blur(12px)"}}>
+      {[["leaderboard","Leaderboard"],["owners","Owners"],["settlements","Settlements"],["payouts","Payouts"]].map(([k,l])=>
+        <button key={k} onClick={()=>setView(k)} style={{padding:"14px 14px",background:"transparent",border:"none",borderBottom:view===k?"2px solid #c9a84c":"2px solid transparent",color:view===k?"#c9a84c":"#7a9b7e",fontSize:"13px",fontWeight:"500"}}>{l}</button>
       )}
     </div>
 
     <div style={{maxWidth:"680px",margin:"0 auto",padding:"20px 16px 60px"}}>
 
-    {/* ===== AUCTION ===== */}
-    {view==="auction"&&<>
-
-      {/* LIVE AUCTION MODE */}
-      {auctionActive&&currentGolfer&&<div className="fade-in" style={{background:"linear-gradient(135deg,rgba(201,168,76,0.1),rgba(30,61,34,0.3))",border:"1px solid rgba(201,168,76,0.3)",borderRadius:"16px",padding:"24px",marginBottom:"20px",textAlign:"center"}}>
-        <div style={{fontSize:"11px",letterSpacing:"3px",color:"#c9a84c",textTransform:"uppercase",fontWeight:"600",marginBottom:"4px",animation:"pulse 2s infinite"}}>🔴 Now Auctioning</div>
-        <div style={{fontSize:"12px",color:"#5a8a5e",marginBottom:"12px"}}>Golfer {currentIdx+1} of {order.length}</div>
-        <div style={{fontFamily:"'Playfair Display',serif",fontSize:"28px",fontWeight:"600",color:"#fff",marginBottom:"4px"}}>{currentGolfer.name}</div>
-        <div style={{fontSize:"15px",color:"#7a9b7e",marginBottom:"20px"}}>{currentGolfer.odds} · {TN[currentGolfer.tier]}</div>
-
-        {admin?<div>
-          <div style={{display:"flex",gap:"8px",justifyContent:"center",marginBottom:"12px",flexWrap:"wrap"}}>
-            <select value={so} onChange={e=>setSo(e.target.value)} style={{...I,minWidth:"120px"}}>
-              <option value="">Winner?</option>{parts.map(p=><option key={p} value={p}>{p}</option>)}
-            </select>
-            <div style={{position:"relative"}}>
-              <span style={{position:"absolute",left:"12px",top:"50%",transform:"translateY(-50%)",color:"#5a8a5e",fontSize:"14px",pointerEvents:"none"}}>$</span>
-              <input type="number" value={ba} onChange={e=>setBa(e.target.value)} placeholder="0" style={{...I,width:"90px",paddingLeft:"24px",fontSize:"16px",fontWeight:"600"}}/>
+    {/* LEADERBOARD */}
+    {view==="leaderboard"&&<>
+      {RESULTS.map((r,i)=>{
+        const ow=OWNERS[r.name];
+        const mc=r.pos==="MC";
+        const po=getPayout(r.name);
+        const oc=ow?pc[ow.owner]||"#3a5a3e":"#3a5a3e";
+        const inPool=!!ow;
+        return <div key={r.name} style={{
+          display:"flex",alignItems:"center",justifyContent:"space-between",
+          padding:"9px 12px",marginBottom:mc&&i===RESULTS.findIndex(x=>x.pos==="MC")?"0":"1px",
+          borderRadius:"6px",minHeight:"42px",
+          background:mc?"rgba(212,125,94,0.05)":r.pos<=2?"rgba(201,168,76,0.1)":r.pos<=6?"rgba(201,168,76,0.05)":"transparent",
+          borderLeft:`3px solid ${mc?"#d47d5e33":r.pos===1?"#c9a84c":r.pos===2?"#c9a84caa":r.pos<=6?"#c9a84c55":r.pos<=10?"#5bb88a44":"#1e3d2244"}`,
+          opacity:inPool?1:0.4,
+        }}>
+          <div style={{flex:1,minWidth:0,display:"flex",alignItems:"center",gap:"4px"}}>
+            <span style={{fontSize:"13px",fontWeight:"700",minWidth:"32px",color:mc?"#d47d5e":r.pos<=3?"#c9a84c":"#7a9b7e"}}>{mc?"MC":r.tie||r.pos}</span>
+            <div>
+              <span style={{fontSize:"14px",fontWeight:"500"}}>{r.name}</span>
+              <span style={{fontSize:"12px",color:"#5a8a5e",marginLeft:"8px"}}>{r.score}</span>
+              {r.r4&&<span style={{fontSize:"11px",color:"#3a5a3e",marginLeft:"4px"}}>R4: {r.r4}</span>}
             </div>
           </div>
-          <div style={{display:"flex",gap:"8px",justifyContent:"center"}}>
-            <button onClick={soldAndNext} style={{padding:"10px 28px",background:"#c9a84c",border:"none",borderRadius:"8px",color:"#0b1a0e",fontSize:"14px",fontWeight:"700",cursor:"pointer"}}>Sold! Next →</button>
-            <button onClick={skipGolfer} style={{padding:"10px 20px",background:"transparent",border:"1px solid #1e3d22",borderRadius:"8px",color:"#7a9b7e",fontSize:"13px",fontWeight:"500",cursor:"pointer"}}>Skip</button>
+          <div style={{display:"flex",alignItems:"center",gap:"8px",flexShrink:0}}>
+            {po>0&&inPool&&<span style={{fontSize:"12px",color:"#5bb88a",fontWeight:"600"}}>{fmt$(po)}</span>}
+            {inPool&&<span style={{display:"inline-flex",borderRadius:"100px",padding:"2px 10px",fontSize:"11px",fontWeight:"500",background:oc+"25",border:`1px solid ${oc}44`,color:"#e8e4da"}}>{ow.owner}</span>}
+            {!inPool&&!mc&&<span style={{fontSize:"10px",color:"#3a5a3e"}}>not in pool</span>}
           </div>
-        </div>
-        :<div style={{fontSize:"14px",color:"#7a9b7e",fontStyle:"italic"}}>Bidding in progress...</div>}
-      </div>}
-
-      {auctionActive&&!currentGolfer&&<div style={{textAlign:"center",padding:"32px",background:"rgba(201,168,76,0.08)",borderRadius:"16px",border:"1px solid rgba(201,168,76,0.2)",marginBottom:"20px"}}>
-        <div style={{fontSize:"24px",marginBottom:"8px"}}>🏆</div>
-        <div style={{fontSize:"18px",fontWeight:"600",color:"#c9a84c",marginBottom:"4px"}}>Auction Complete</div>
-        <div style={{fontSize:"14px",color:"#7a9b7e"}}>All golfers sold. Total pot: {fmt$(pot)}</div>
-        {admin&&<button onClick={endAuction} style={{marginTop:"12px",padding:"8px 20px",background:"transparent",border:"1px solid #1e3d22",borderRadius:"8px",color:"#7a9b7e",fontSize:"13px",cursor:"pointer"}}>Close Auction</button>}
-      </div>}
-
-      {/* Admin controls */}
-      {admin&&<div style={{background:"rgba(255,255,255,0.03)",border:"1px solid #1e3d22",borderRadius:"12px",padding:"18px",marginBottom:"16px"}}>
-        <div style={{fontSize:"11px",letterSpacing:"2.5px",textTransform:"uppercase",color:"#c9a84c",marginBottom:"14px",fontWeight:"600"}}>Commissioner Controls</div>
-
-        {/* Bidders */}
-        <div style={{display:"flex",flexWrap:"wrap",gap:"5px",marginBottom:"14px"}}>
-          {parts.map(p=><div key={p} style={{display:"inline-flex",alignItems:"center",gap:"4px",borderRadius:"100px",padding:"4px 10px",fontSize:"12px",fontWeight:"500",background:pc[p]+"22",border:`1px solid ${pc[p]}55`}}>
-            <span style={{width:"7px",height:"7px",borderRadius:"50%",background:pc[p],display:"inline-block"}}/>
-            <span style={{color:"#e8e4da"}}>{p}</span>
-            <span onClick={()=>remP(p)} style={{cursor:"pointer",color:"#7a9b7e",fontSize:"10px",marginLeft:"2px"}}>✕</span>
-          </div>)}
-        </div>
-        <div style={{display:"flex",gap:"8px",marginBottom:"16px"}}>
-          <input value={nn} onChange={e=>setNn(e.target.value)} onKeyDown={e=>{if(e.key==="Enter")addP();}} placeholder="Add bidder..." style={{...I,flex:1}}/>
-          <button onClick={addP} style={{padding:"8px 16px",border:"none",borderRadius:"8px",fontSize:"13px",fontWeight:"600",cursor:"pointer",background:"#c9a84c",color:"#0b1a0e"}}>Add</button>
-        </div>
-
-        {/* Auction controls */}
-        <div style={{display:"flex",gap:"8px",flexWrap:"wrap"}}>
-          <button onClick={doShuffle} style={{padding:"8px 16px",background:"transparent",border:"1px solid #1e3d22",borderRadius:"8px",color:"#7a9b7e",fontSize:"13px",fontWeight:"600",cursor:"pointer"}}>🎲 {shuffled?"Reshuffle":"Shuffle Order"}</button>
-          {!auctionActive&&shuffled&&<button onClick={startAuction} style={{padding:"8px 20px",background:"#c9a84c",border:"none",borderRadius:"8px",color:"#0b1a0e",fontSize:"13px",fontWeight:"700",cursor:"pointer"}}>▶ Start Auction</button>}
-          {auctionActive&&<button onClick={endAuction} style={{padding:"8px 16px",background:"transparent",border:"1px solid #d47d5e44",borderRadius:"8px",color:"#d47d5e",fontSize:"13px",fontWeight:"500",cursor:"pointer"}}>End Auction</button>}
-        </div>
-      </div>}
-
-      {/* Bidder legend (non-admin) */}
-      {!admin&&<div style={{display:"flex",flexWrap:"wrap",gap:"8px",marginBottom:"18px"}}>
-        {parts.map(p=><div key={p} style={{display:"flex",alignItems:"center",gap:"4px",fontSize:"12px",color:"#7a9b7e"}}>
-          <span style={{width:"6px",height:"6px",borderRadius:"50%",background:pc[p],display:"inline-block"}}/>{p}
-        </div>)}
-      </div>}
-
-      {/* Board - auction order */}
-      <div style={{marginBottom:"24px"}}>
-        <div style={{fontSize:"12px",letterSpacing:"2px",textTransform:"uppercase",color:"#c9a84c",fontWeight:"600",marginBottom:"8px",paddingBottom:"6px",borderBottom:"1px solid rgba(30,61,34,0.5)"}}>Auction Order{shuffled?" · Randomized":""}</div>
-        {order.map((name,idx)=>{
-          const g=gm[name];if(!g)return null;
-          const ow=owners[g.name];
-          const isE=eg===g.name;
-          const isCurrent=auctionActive&&currentIdx===idx;
-          return <div key={g.name} style={{
-            display:"flex",alignItems:"center",justifyContent:"space-between",
-            padding:"10px 12px",marginBottom:"2px",borderRadius:"8px",minHeight:"44px",
-            background:isCurrent?"rgba(201,168,76,0.12)":ow?`${pc[ow.owner]||"#555"}15`:"transparent",
-            border:isCurrent?"1px solid rgba(201,168,76,0.3)":ow?`1px solid ${pc[ow.owner]||"#555"}33`:"1px solid transparent",
-          }}>
-            <div style={{flex:1,minWidth:0,display:"flex",alignItems:"center"}}>
-              {isCurrent&&<span style={{fontSize:"10px",color:"#c9a84c",marginRight:"6px",fontWeight:"700"}}>▶</span>}
-              <span style={{fontSize:"11px",color:"#3a5a3e",marginRight:"6px",fontWeight:"500",minWidth:"22px"}}>{idx+1}</span>
-              <span style={{fontSize:"15px",fontWeight:"500"}}>{g.name}</span>
-              <span style={{fontSize:"12px",color:"#5a8a5e",marginLeft:"8px"}}>{g.odds}</span>
-            </div>
-            {admin&&isE&&!auctionActive?<div style={{display:"flex",gap:"5px",alignItems:"center",flexShrink:0}}>
-              <select value={so} onChange={e=>setSo(e.target.value)} style={{...Is,maxWidth:"100px"}}><option value="">Owner</option>{parts.map(p=><option key={p} value={p}>{p}</option>)}</select>
-              <div style={{position:"relative"}}><span style={{position:"absolute",left:"10px",top:"50%",transform:"translateY(-50%)",color:"#5a8a5e",fontSize:"13px",pointerEvents:"none"}}>$</span>
-              <input type="number" value={ba} onChange={e=>setBa(e.target.value)} placeholder="0" style={{...Is,width:"65px",paddingLeft:"22px"}}/></div>
-              <button onClick={()=>assign(g.name)} style={{padding:"5px 10px",border:"none",borderRadius:"6px",fontSize:"12px",fontWeight:"600",cursor:"pointer",background:"#c9a84c",color:"#0b1a0e"}}>✓</button>
-              <button onClick={()=>{setEg(null);setSo("");setBa("");}} style={{padding:"5px 8px",background:"transparent",border:"1px solid #1e3d22",borderRadius:"6px",color:"#7a9b7e",fontSize:"12px",cursor:"pointer"}}>✕</button>
-            </div>:ow?<div style={{display:"flex",alignItems:"center",gap:"6px",flexShrink:0}}>
-              <span style={{display:"inline-flex",alignItems:"center",gap:"5px",borderRadius:"100px",padding:"4px 12px",fontSize:"12px",fontWeight:"500",background:pc[ow.owner]+"30",border:`1px solid ${pc[ow.owner]}55`,color:"#e8e4da"}}>{ow.owner} · {fmt$(ow.bid)}</span>
-              {admin&&!auctionActive&&!isLocked(name)&&<span onClick={()=>{setEg(name);setSo(ow.owner);setBa(String(ow.bid));}} style={{cursor:"pointer",color:"#7a9b7e",fontSize:"12px"}}>✎</span>}
-              {admin&&!auctionActive&&!isLocked(name)&&<span onClick={()=>unassign(name)} style={{cursor:"pointer",color:"#3a5a3e",fontSize:"12px"}}>✕</span>}
-            </div>:admin&&!auctionActive?<button onClick={()=>setEg(g.name)} style={{padding:"5px 12px",background:"transparent",border:"1px solid #1e3d22",borderRadius:"6px",color:"#7a9b7e",fontSize:"12px",fontWeight:"600",cursor:"pointer"}}>Assign</button>
-            :<span style={{fontSize:"12px",color:"#2a4a2e"}}>—</span>}
-          </div>;
-        })}
-      </div>
+        </div>;
+      })}
     </>}
 
-    {/* ===== OWNERS ===== */}
+    {/* OWNERS */}
     {view==="owners"&&<>
-      {[...parts].sort((a,b)=>(os[b]?.spent||0)-(os[a]?.spent||0)).map(p=>{
-        const s=os[p]||{spent:0,golfers:[]};
+      {[...PARTS].sort((a,b)=>(ownerData[b]?.payout-ownerData[b]?.spent)-(ownerData[a]?.payout-ownerData[a]?.spent)).map(p=>{
+        const d=ownerData[p];
+        const net=d.payout-d.spent;
         return <div key={p} style={{borderRadius:"12px",padding:"14px 16px",marginBottom:"10px",background:"rgba(255,255,255,0.03)",border:"1px solid #1e3d22",borderLeft:`3px solid ${pc[p]}`}}>
           <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"6px"}}>
             <div style={{display:"flex",alignItems:"center",gap:"8px"}}><span style={{width:"8px",height:"8px",borderRadius:"50%",background:pc[p]}}/><span style={{fontSize:"16px",fontWeight:"600"}}>{p}</span></div>
-            <span style={{fontSize:"14px",color:"#c9a84c",fontWeight:"600"}}>{fmt$(s.spent)}</span>
-          </div>
-          {s.golfers.length>0?<div style={{display:"flex",flexWrap:"wrap",gap:"5px",marginTop:"4px"}}>
-            {s.golfers.sort((a,b)=>b.bid-a.bid).map(g=>{
-              const t=tourn[g.name];
-              return <span key={g.name} style={{fontSize:"12px",background:"rgba(0,0,0,0.25)",padding:"3px 10px",borderRadius:"100px",color:"#7a9b7e"}}>
-                {g.name} <span style={{color:"#c9a84c"}}>{fmt$(g.bid)}</span>
-                {t&&<span style={{color:t.position==="MC"?"#d47d5e":"#5bb88a",marginLeft:"4px"}}>{t.position==="MC"?"MC":t.position}</span>}
-              </span>;
-            })}
-          </div>:<span style={{fontSize:"13px",color:"#2a4a2e"}}>No golfers yet</span>}
-        </div>;
-      })}
-      {pot>0&&<div style={{textAlign:"center",marginTop:"20px",padding:"16px",background:"rgba(201,168,76,0.08)",borderRadius:"12px",border:"1px solid rgba(201,168,76,0.2)"}}>
-        <div style={{fontSize:"11px",letterSpacing:"2px",color:"#7a9b7e",marginBottom:"4px",fontWeight:"500"}}>TOTAL POT</div>
-        <div style={{fontFamily:"'Playfair Display',serif",fontSize:"32px",color:"#c9a84c",fontWeight:"700"}}>{fmt$(pot)}</div>
-        <div style={{fontSize:"12px",color:"#5a8a5e",marginTop:"4px"}}>{soldCount} golfers across {parts.length} bidders</div>
-      </div>}
-    </>}
-
-    {/* ===== LEADERBOARD ===== */}
-    {view==="leaderboard"&&<>
-      {admin&&<div style={{background:"rgba(255,255,255,0.03)",border:"1px solid #1e3d22",borderRadius:"12px",padding:"18px",marginBottom:"16px"}}>
-        <div style={{fontSize:"11px",letterSpacing:"2.5px",textTransform:"uppercase",color:"#c9a84c",marginBottom:"14px",fontWeight:"600"}}>Update Scores</div>
-        <div style={{display:"flex",gap:"6px",flexWrap:"wrap"}}>
-          <select value={es||""} onChange={e=>{setEs(e.target.value);setSp("");setSv("");setSthru("");}} style={{...I,flex:"1 1 140px"}}><option value="">Select golfer...</option>{GOLFERS.map(g=><option key={g.name} value={g.name}>{g.name}</option>)}</select>
-          <input value={sp} onChange={e=>setSp(e.target.value)} placeholder="Pos/MC" style={{...Is,width:"68px"}}/>
-          <input value={sv} onChange={e=>setSv(e.target.value)} placeholder="Score" style={{...Is,width:"60px"}}/>
-          <input value={sthru} onChange={e=>setSthru(e.target.value)} placeholder="Thru" style={{...Is,width:"50px"}}/>
-          <button onClick={()=>es&&saveSc(es)} style={{padding:"6px 14px",border:"none",borderRadius:"6px",fontSize:"13px",fontWeight:"600",cursor:"pointer",background:"#c9a84c",color:"#0b1a0e"}}>Save</button>
-        </div>
-      </div>}
-      {lb.length===0?<div style={{textAlign:"center",padding:"48px 24px",color:"#3a5a3e"}}>
-        <div style={{fontSize:"32px",marginBottom:"12px"}}>⛳</div>
-        <div style={{fontSize:"14px",lineHeight:"1.5"}}>{admin?"Add tournament scores above.":"Leaderboard updates when the tournament begins Thursday."}</div>
-      </div>:lb.map(e=>{
-        const mc=e.position==="MC";
-        const po=!mc&&e.position<=5?PAYOUTS[e.position-1]:null;
-        const pa=po&&pot>0?(pot*po.pct/100):null;
-        const inTop10=!mc&&e.position>=6&&e.position<=10;
-        const t10share=inTop10&&pot>0?(pot*10/100/5):null; // rough estimate
-        const inCut=!mc&&e.position>10;
-        const oc=pc[e.owner]||"#3a5a3e";
-        return <div key={e.name} style={{
-          display:"flex",alignItems:"center",justifyContent:"space-between",
-          padding:"9px 12px",marginBottom:"2px",borderRadius:"8px",minHeight:"44px",
-          background:mc?"rgba(212,125,94,0.06)":e.position<=3?"rgba(201,168,76,0.08)":"transparent",
-          borderLeft:`3px solid ${mc?"#d47d5e44":e.position<=3?"#c9a84c":e.position<=10?"#5bb88a55":"#1e3d2244"}`,
-        }}>
-          <div style={{flex:1,minWidth:0,display:"flex",alignItems:"center",gap:"4px"}}>
-            <span style={{fontSize:"14px",fontWeight:"700",minWidth:"32px",color:mc?"#d47d5e":"#c9a84c"}}>{mc?"MC":e.position}</span>
-            <div><span style={{fontSize:"14px",fontWeight:"500"}}>{e.name}</span>
-            {e.score&&<span style={{fontSize:"12px",color:"#7a9b7e",marginLeft:"8px"}}>{e.score}</span>}
-            {e.thru&&<span style={{fontSize:"11px",color:"#3a5a3e",marginLeft:"4px"}}>thru {e.thru}</span>}</div>
-          </div>
-          <div style={{display:"flex",alignItems:"center",gap:"8px",flexShrink:0}}>
-            {pa&&<span style={{fontSize:"13px",color:"#5bb88a",fontWeight:"600"}}>{fmt$(pa)}</span>}
-            {inTop10&&<span style={{fontSize:"11px",color:"#5bb88a",fontWeight:"500"}}>T10</span>}
-            {inCut&&<span style={{fontSize:"11px",color:"#5a8a5e"}}>cut</span>}
-            <span style={{display:"inline-flex",borderRadius:"100px",padding:"2px 10px",fontSize:"11px",fontWeight:"500",background:oc+"25",border:`1px solid ${oc}44`,color:"#e8e4da"}}>{e.owner}</span>
-            {admin&&<><span onClick={()=>{setEs(e.name);setSp(String(e.position));setSv(e.score||"");setSthru(e.thru||"");window.scrollTo(0,0);}} style={{cursor:"pointer",color:"#7a9b7e",fontSize:"12px"}}>✎</span>
-            <span onClick={()=>remSc(e.name)} style={{cursor:"pointer",color:"#3a5a3e",fontSize:"12px"}}>✕</span></>}
-          </div>
-        </div>;
-      })}
-    </>}
-
-    {/* ===== PAYOUTS ===== */}
-    {view==="payouts"&&<div>
-      <div style={{background:"rgba(255,255,255,0.03)",border:"1px solid #1e3d22",borderRadius:"12px",padding:"18px",marginBottom:"16px"}}>
-        <div style={{fontSize:"11px",letterSpacing:"2.5px",textTransform:"uppercase",color:"#c9a84c",marginBottom:"14px",fontWeight:"600"}}>Payout Structure{pot>0&&` · ${fmt$(pot)} pot`}</div>
-        {PAYOUTS.map(p=>{const a=pot>0?(pot*p.pct/100):0;return(
-          <div key={p.place} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"12px 0",borderBottom:"1px solid rgba(30,61,34,0.3)"}}>
-            <div><span style={{fontSize:"15px",fontWeight:500,color:["Made Cut","Top 10"].includes(p.place)?"#7a9b7e":"#e8e4da"}}>{p.place}</span>
-            {p.note&&<span style={{fontSize:"12px",color:"#3a5a3e",marginLeft:"8px"}}>({p.note})</span>}</div>
-            <div style={{display:"flex",alignItems:"center",gap:"12px"}}>
-              {pot>0&&<span style={{fontSize:"14px",color:"#7a9b7e"}}>{fmt$(a)}</span>}
-              <span style={{fontSize:"15px",color:"#c9a84c",fontWeight:"600",minWidth:"42px",textAlign:"right"}}>{p.pct}%</span>
+            <div style={{textAlign:"right",fontSize:"13px"}}>
+              <span style={{color:"#7a9b7e"}}>{fmt$(d.spent)} in</span>
+              <span style={{marginLeft:"6px",color:"#5bb88a"}}>{fmt$(d.payout)} out</span>
+              <span style={{marginLeft:"6px",fontWeight:"700",color:net>=0?"#5bb88a":"#d47d5e"}}>{net>=0?"+":""}{fmt$(net)}</span>
             </div>
           </div>
-        );})}
+          <div style={{display:"flex",flexWrap:"wrap",gap:"4px",marginTop:"4px"}}>
+            {d.golfers.sort((a,b)=>(a.pos==="MC"?999:a.pos)-(b.pos==="MC"?999:b.pos)).map(g=>
+              <span key={g.name} style={{fontSize:"11px",background:"rgba(0,0,0,0.25)",padding:"2px 8px",borderRadius:"100px",color:"#7a9b7e"}}>
+                {g.name} <span style={{color:"#c9a84c"}}>{fmt$(g.bid)}</span>
+                <span style={{color:g.pos==="MC"?"#d47d5e":g.pos<=10?"#5bb88a":"#5a8a5e",marginLeft:"3px"}}>{g.pos==="MC"?"MC":g.pos}</span>
+                {g.payout>0&&<span style={{color:"#5bb88a",marginLeft:"3px"}}>→{fmt$(g.payout)}</span>}
+              </span>
+            )}
+          </div>
+        </div>;
+      })}
+      <div style={{textAlign:"center",marginTop:"20px",padding:"16px",background:"rgba(201,168,76,0.08)",borderRadius:"12px",border:"1px solid rgba(201,168,76,0.2)"}}>
+        <div style={{fontSize:"11px",letterSpacing:"2px",color:"#7a9b7e",marginBottom:"4px",fontWeight:"500"}}>TOTAL POT</div>
+        <div style={{fontFamily:"'Playfair Display',serif",fontSize:"32px",color:"#c9a84c",fontWeight:"700"}}>{fmt$(POT)}</div>
+      </div>
+    </>}
+
+    {/* SETTLEMENTS */}
+    {view==="settlements"&&<>
+      <div style={{background:"rgba(201,168,76,0.08)",border:"1px solid rgba(201,168,76,0.2)",borderRadius:"12px",padding:"18px",marginBottom:"20px",textAlign:"center"}}>
+        <div style={{fontSize:"15px",fontWeight:"600",color:"#c9a84c",marginBottom:"6px"}}>Pay outstanding bids to</div>
+        <div style={{fontSize:"22px",fontWeight:"700",color:"#fff",marginBottom:"4px"}}>@kylewright07</div>
+        <div style={{fontSize:"13px",color:"#7a9b7e"}}>Venmo · then check in with Kyle</div>
+      </div>
+
+      <div style={{fontSize:"11px",letterSpacing:"2.5px",textTransform:"uppercase",color:"#c9a84c",marginBottom:"12px",fontWeight:"600"}}>Final Settlements</div>
+
+      {/* Winners first */}
+      {[...PARTS].filter(p=>p!=="Kyle").sort((a,b)=>(ownerData[b].payout-ownerData[b].spent)-(ownerData[a].payout-ownerData[a].spent)).map(p=>{
+        const d=ownerData[p];
+        const net=d.payout-d.spent;
+        const isPaid=paid[p];
+        return <div key={p} style={{
+          display:"flex",alignItems:"center",justifyContent:"space-between",
+          padding:"12px 14px",marginBottom:"4px",borderRadius:"8px",
+          background:isPaid?"rgba(91,184,138,0.06)":"rgba(255,255,255,0.03)",
+          border:`1px solid ${isPaid?"#5bb88a33":"#1e3d22"}`,
+          borderLeft:`3px solid ${pc[p]}`,
+          opacity:isPaid?0.6:1,
+        }}>
+          <div style={{display:"flex",alignItems:"center",gap:"10px"}}>
+            {admin&&<div onClick={()=>togglePaid(p)} style={{
+              width:"22px",height:"22px",borderRadius:"6px",
+              border:`2px solid ${isPaid?"#5bb88a":"#3a5a3e"}`,
+              background:isPaid?"#5bb88a":"transparent",
+              display:"flex",alignItems:"center",justifyContent:"center",
+              cursor:"pointer",flexShrink:0,
+            }}>{isPaid&&<span style={{color:"#0b1a0e",fontSize:"14px",fontWeight:"700"}}>✓</span>}</div>}
+            <div>
+              <div style={{fontSize:"15px",fontWeight:"600"}}>{p}</div>
+              <div style={{fontSize:"12px",color:"#5a8a5e"}}>{fmt$(d.spent)} invested · {fmt$(d.payout)} payout</div>
+            </div>
+          </div>
+          <div style={{textAlign:"right"}}>
+            {net>0?<>
+              <div style={{fontSize:"11px",color:"#5a8a5e"}}>Kyle sends</div>
+              <div style={{fontSize:"16px",fontWeight:"700",color:"#5bb88a"}}>{fmt$(net)}</div>
+            </>:<>
+              <div style={{fontSize:"11px",color:"#5a8a5e"}}>Net loss</div>
+              <div style={{fontSize:"16px",fontWeight:"700",color:"#d47d5e"}}>{fmt$(Math.abs(net))}</div>
+            </>}
+          </div>
+        </div>;
+      })}
+
+      {/* Kyle's own line */}
+      <div style={{
+        display:"flex",alignItems:"center",justifyContent:"space-between",
+        padding:"12px 14px",marginBottom:"4px",borderRadius:"8px",
+        background:"rgba(201,168,76,0.06)",border:"1px solid rgba(201,168,76,0.2)",
+        borderLeft:`3px solid ${pc["Kyle"]}`,marginTop:"12px",
+      }}>
+        <div>
+          <div style={{fontSize:"15px",fontWeight:"600"}}>Kyle <span style={{fontSize:"11px",color:"#c9a84c",marginLeft:"4px"}}>COMMISSIONER</span></div>
+          <div style={{fontSize:"12px",color:"#5a8a5e"}}>{fmt$(ownerData["Kyle"].spent)} invested · {fmt$(ownerData["Kyle"].payout)} payout</div>
+        </div>
+        <div style={{textAlign:"right"}}>
+          <div style={{fontSize:"11px",color:"#5a8a5e"}}>Net</div>
+          <div style={{fontSize:"16px",fontWeight:"700",color:"#d47d5e"}}>{fmt$(Math.abs(ownerData["Kyle"].payout-ownerData["Kyle"].spent))}</div>
+        </div>
+      </div>
+
+      <div style={{marginTop:"20px",padding:"14px",background:"rgba(255,255,255,0.03)",borderRadius:"10px",border:"1px solid #1e3d22",fontSize:"13px",color:"#5a8a5e",lineHeight:"1.7"}}>
+        <div style={{fontWeight:"600",color:"#7a9b7e",marginBottom:"4px"}}>How settlements work:</div>
+        Everyone already Venmo'd their bid amounts to @kylewright07. Kyle now Venmos payouts back to anyone who won money. If your payout is less than what you bid, you're already settled (net loss, no action needed).
+      </div>
+    </>}
+
+    {/* PAYOUTS */}
+    {view==="payouts"&&<div>
+      <div style={{background:"rgba(255,255,255,0.03)",border:"1px solid #1e3d22",borderRadius:"12px",padding:"18px",marginBottom:"16px"}}>
+        <div style={{fontSize:"11px",letterSpacing:"2.5px",textTransform:"uppercase",color:"#c9a84c",marginBottom:"14px",fontWeight:"600"}}>Payout Structure · {fmt$(POT)} pot</div>
+        {[{place:"1st",pct:35},{place:"2nd",pct:20},{place:"T3 (4-way tie)",pct:6.75,note:"each"},{place:"T7 (2-way tie)",pct:2,note:"each"},{place:"T9 (pool)",pct:2,note:"Schauffele"},{place:"T9 (non-pool)",pct:2,note:"Homa → cut pool"},{place:"Made Cut",pct:null,note:"$"+CUT_SHARE.toFixed(2)+" each (24 golfers)"}].map((p,i)=>{
+          const a=p.pct?POT*p.pct/100:CUT_POOL;
+          return <div key={i} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"10px 0",borderBottom:"1px solid rgba(30,61,34,0.3)"}}>
+            <div><span style={{fontSize:"14px",fontWeight:500,color:"#e8e4da"}}>{p.place}</span>{p.note&&<span style={{fontSize:"12px",color:"#3a5a3e",marginLeft:"8px"}}>({p.note})</span>}</div>
+            <div style={{display:"flex",alignItems:"center",gap:"12px"}}>
+              <span style={{fontSize:"14px",color:"#7a9b7e"}}>{p.pct?fmt$(a):fmt$(CUT_POOL)+" total"}</span>
+              {p.pct&&<span style={{fontSize:"14px",color:"#c9a84c",fontWeight:"600",minWidth:"42px",textAlign:"right"}}>{p.pct}%</span>}
+            </div>
+          </div>;
+        })}
       </div>
       <div style={{background:"rgba(255,255,255,0.03)",border:"1px solid #1e3d22",borderRadius:"12px",padding:"18px",fontSize:"14px",color:"#7a9b7e",lineHeight:"1.8"}}>
-        <div style={{fontSize:"11px",letterSpacing:"2.5px",textTransform:"uppercase",color:"#c9a84c",marginBottom:"14px",fontWeight:"600"}}>Rules</div>
-        <p style={{marginBottom:"8px"}}>True Calcutta. Bid real dollars. No cap. Prize pool = total of all bids.</p>
-        <p style={{marginBottom:"8px"}}>40 golfers auctioned individually. Auction order is fully randomized before the auction starts.</p>
-        <p style={{marginBottom:"8px"}}>Ascending bid. $1 to open, $1 minimum raise. Must own at least one golfer.</p>
-        <p style={{marginBottom:"8px"}}>All payments due via Venmo before Thursday's first tee time.</p>
-        <p style={{marginBottom:"8px"}}>Missed cuts get nothing. 6th-10th split 10%. Made cut outside top 10 splits 10%.</p>
-        <p>If an out-of-pool golfer finishes top 10, that payout rolls to the cut pool.</p>
+        <div style={{fontSize:"11px",letterSpacing:"2.5px",textTransform:"uppercase",color:"#c9a84c",marginBottom:"14px",fontWeight:"600"}}>Tie Rationale</div>
+        <p style={{marginBottom:"8px"}}><strong style={{color:"#e8e4da"}}>T3 (Hatton, Henley, Rose, Young):</strong> 4-way tie spanning positions 3-4-5-6. Combined payouts: 12% + 8% + 5% + 2% = 27%. Split four ways = 6.75% each = {fmt$(POT*0.0675)}.</p>
+        <p style={{marginBottom:"8px"}}><strong style={{color:"#e8e4da"}}>T7 (Burns, Morikawa):</strong> 2-way tie spanning positions 7-8. Each position pays 2% from the Top 10 pool. 2% each = {fmt$(POT*0.02)}.</p>
+        <p style={{marginBottom:"8px"}}><strong style={{color:"#e8e4da"}}>T9 (Schauffele, Homa):</strong> Max Homa is not in our pool. Schauffele gets his 2% ({fmt$(POT*0.02)}). Homa's 2% rolls into the cut pool.</p>
+        <p><strong style={{color:"#e8e4da"}}>Cut pool:</strong> Base 10% + 2% Homa rollover = 12% = {fmt$(CUT_POOL)}. Split among 24 pool golfers who made the cut outside top 10 = {fmt$(CUT_SHARE)} each.</p>
       </div>
     </div>}
 
